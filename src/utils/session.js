@@ -1,0 +1,68 @@
+export const ROLE_META = {
+  FARMER: {
+    label: 'Farmer',
+    loginPath: '/farmer/login',
+    registerPath: '/farmer/register',
+    dashboardPath: '/farmer/dashboard',
+  },
+  RETAILER: {
+    label: 'Retailer',
+    loginPath: '/retailer/login',
+    registerPath: '/retailer/register',
+    dashboardPath: '/retailer/dashboard',
+  },
+  AGENT: {
+    label: 'Agent',
+    loginPath: '/agent/login',
+    registerPath: '/agent/register',
+    dashboardPath: '/agent/dashboard',
+  },
+  ADMIN: {
+    label: 'Admin',
+    loginPath: '/admin/login',
+    registerPath: '/admin/register',
+    dashboardPath: '/admin/dashboard',
+  },
+};
+
+export function getSession() {
+  return {
+    token: localStorage.getItem('jwt') || '',
+    userId: localStorage.getItem('userId') || '',
+    username: localStorage.getItem('username') || '',
+    role: localStorage.getItem('role') || '',
+  };
+}
+
+export function saveSession(authResponse) {
+  localStorage.setItem('jwt', authResponse.token || '');
+  localStorage.setItem('userId', String(authResponse.userId || ''));
+  localStorage.setItem('username', authResponse.username || '');
+  localStorage.setItem('role', authResponse.role || '');
+}
+
+export function clearSession() {
+  localStorage.removeItem('jwt');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
+  localStorage.removeItem('adminId');
+}
+
+export function roleHomePath(role, type) {
+  const meta = ROLE_META[role];
+
+  if (!meta) {
+    return '/';
+  }
+
+  if (type === 'login') {
+    return meta.loginPath;
+  }
+
+  if (type === 'register') {
+    return meta.registerPath;
+  }
+
+  return meta.dashboardPath;
+}
