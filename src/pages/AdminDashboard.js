@@ -231,6 +231,27 @@ function AdminDashboard() {
     }
   };
 
+  const openUserCreateModal = () => {
+    openModal({
+      title: 'Create User',
+      endpoint: `/api/admins/${session.userId}/users`,
+      method: 'post',
+      successMessage: 'User created.',
+      values: { username: '', role: '', password: '' },
+      fields: [
+        { name: 'username', label: 'Username', required: true },
+        {
+          name: 'role',
+          label: 'Role',
+          required: true,
+          select: true,
+          options: ['ADMIN', 'FARMER', 'RETAILER', 'AGENT'],
+        },
+        { name: 'password', label: 'Password', type: 'password', required: true },
+      ],
+    });
+  };
+
   const openUserEditModal = (user) => {
     openModal({
       title: `Update User #${user.id}`,
@@ -628,6 +649,9 @@ function AdminDashboard() {
       <WorkflowPanel active={activeTab} value="administration">
         <Box className="dashboard-grid dashboard-grid--admin">
           <SectionCard title="User Management" subtitle="Update user identity, role, or password and remove accounts when required.">
+            <Box sx={{ mb: 2 }}>
+              <Button variant="contained" onClick={openUserCreateModal}>Create User</Button>
+            </Box>
             <MarketplaceTable
               emptyMessage="No users found."
               rows={users}

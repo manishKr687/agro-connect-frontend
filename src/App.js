@@ -21,7 +21,7 @@ import { clearSession, getSession, roleHomePath } from './utils/session';
 function PrivateRoute({ children, role }) {
   const session = getSession();
 
-  if (!session.token) {
+  if (!session.token || !session.userId) {
     return <Navigate to={role ? roleHomePath(role, 'login') : '/'} replace />;
   }
 
