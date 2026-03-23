@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
@@ -20,6 +20,7 @@ function FarmerDashboard() {
   const [editingId, setEditingId] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
+  const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
 
   const fetchHarvests = async () => {
     try {
@@ -86,6 +87,11 @@ function FarmerDashboard() {
   };
 
   const handleEdit = (harvest) => {
+    if (harvest.status !== 'AVAILABLE') {
+      setStatus({ type: 'error', message: 'Only available harvests can be edited.' });
+      return;
+    }
+
     setEditingId(harvest.id);
     setForm({
       cropName: harvest.cropName || '',
@@ -109,6 +115,38 @@ function FarmerDashboard() {
     }
   };
 
+  const openWithdrawalModal = (harvestId) => {
+    setWithdrawalModal({ open: true, harvestId, reason: '', saving: false });
+    setStatus({ type: '', message: '' });
+  };
+
+  const closeWithdrawalModal = () => {
+    setWithdrawalModal({ open: false, harvestId: null, reason: '', saving: false });
+  };
+
+  const handleWithdrawalChange = (event) => {
+    const { value } = event.target;
+    setWithdrawalModal((current) => ({ ...current, reason: value }));
+  };
+
+  const handleWithdrawalSubmit = async (event) => {
+    event.preventDefault();
+    setWithdrawalModal((current) => ({ ...current, saving: true }));
+
+    try {
+      await axiosInstance.post(
+        `/api/farmers/${session.userId}/harvests/${withdrawalModal.harvestId}/withdrawal-request`,
+        { reason: withdrawalModal.reason.trim() },
+      );
+      closeWithdrawalModal();
+      setStatus({ type: 'success', message: 'Withdrawal request sent to admin for resolution.' });
+      fetchHarvests();
+    } catch (error) {
+      setWithdrawalModal((current) => ({ ...current, saving: false }));
+      setStatus({ type: 'error', message: error.response?.data?.message || 'Unable to request withdrawal.' });
+    }
+  };
+
   return (
     <DashboardShell
       role="FARMER"
@@ -119,7 +157,7 @@ function FarmerDashboard() {
       <Box className="dashboard-grid">
         <SectionCard
           title={editingId ? 'Update harvest' : 'Add harvest'}
-          subtitle="Fill in crop, quantity, expected price, and availability date."
+          subtitle="Fill in crop, quantity, expected price, and availability date. Only available harvests can be changed directly."
         >
           <Stack spacing={2} component="form" onSubmit={handleSubmit}>
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
@@ -168,14 +206,42 @@ function FarmerDashboard() {
                 label: 'Actions',
                 type: 'actions',
                 actions: (row) => [
-                  { label: 'Edit', onClick: () => handleEdit(row) },
-                  { label: 'Delete', color: 'error', onClick: () => handleDelete(row.id) },
+                  { label: 'Edit', onClick: () => handleEdit(row), disabled: row.status !== 'AVAILABLE' },
+                  { label: 'Delete', color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'AVAILABLE' },
+                  { label: 'Request Withdrawal', onClick: () => openWithdrawalModal(row.id), disabled: row.status !== 'RESERVED' },
                 ],
               },
             ]}
           />
         </SectionCard>
       </Box>
+
+      <Dialog open={withdrawalModal.open} onClose={withdrawalModal.saving ? undefined : closeWithdrawalModal} fullWidth maxWidth="sm">
+        <Box component="form" onSubmit={handleWithdrawalSubmit}>
+          <DialogTitle>Request Withdrawal</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField
+                name="reason"
+                label="Reason"
+                value={withdrawalModal.reason}
+                onChange={handleWithdrawalChange}
+                required
+                multiline
+                minRows={3}
+                helperText="This will raise an admin exception for the reserved harvest."
+                fullWidth
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeWithdrawalModal} disabled={withdrawalModal.saving}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={withdrawalModal.saving || !withdrawalModal.reason.trim()}>
+              {withdrawalModal.saving ? 'Sending...' : 'Send Request'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </DashboardShell>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
@@ -20,6 +20,15 @@ function RetailerDashboard() {
   const [editingId, setEditingId] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
+  const [changeModal, setChangeModal] = useState({
+    open: false,
+    demandId: null,
+    quantity: '',
+    requiredDate: '',
+    targetPrice: '',
+    reason: '',
+    saving: false,
+  });
 
   const fetchDemands = async () => {
     try {
@@ -86,6 +95,11 @@ function RetailerDashboard() {
   };
 
   const handleEdit = (demand) => {
+    if (demand.status !== 'OPEN') {
+      setStatus({ type: 'error', message: 'Only open demands can be edited directly.' });
+      return;
+    }
+
     setEditingId(demand.id);
     setForm({
       cropName: demand.cropName || '',
@@ -109,6 +123,59 @@ function RetailerDashboard() {
     }
   };
 
+  const openChangeModal = (demand) => {
+    setChangeModal({
+      open: true,
+      demandId: demand.id,
+      quantity: String(demand.quantity || ''),
+      requiredDate: demand.requiredDate || '',
+      targetPrice: String(demand.targetPrice || ''),
+      reason: '',
+      saving: false,
+    });
+    setStatus({ type: '', message: '' });
+  };
+
+  const closeChangeModal = () => {
+    setChangeModal({
+      open: false,
+      demandId: null,
+      quantity: '',
+      requiredDate: '',
+      targetPrice: '',
+      reason: '',
+      saving: false,
+    });
+  };
+
+  const handleChangeRequestField = (event) => {
+    const { name, value } = event.target;
+    setChangeModal((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleChangeRequestSubmit = async (event) => {
+    event.preventDefault();
+    setChangeModal((current) => ({ ...current, saving: true }));
+
+    try {
+      await axiosInstance.post(
+        `/api/retailers/${session.userId}/demands/${changeModal.demandId}/change-request`,
+        {
+          quantity: Number(changeModal.quantity),
+          requiredDate: changeModal.requiredDate,
+          targetPrice: Number(changeModal.targetPrice),
+          reason: changeModal.reason.trim(),
+        },
+      );
+      closeChangeModal();
+      setStatus({ type: 'success', message: 'Demand change request sent to admin for review.' });
+      fetchDemands();
+    } catch (error) {
+      setChangeModal((current) => ({ ...current, saving: false }));
+      setStatus({ type: 'error', message: error.response?.data?.message || 'Unable to request demand change.' });
+    }
+  };
+
   return (
     <DashboardShell
       role="RETAILER"
@@ -119,7 +186,7 @@ function RetailerDashboard() {
       <Box className="dashboard-grid">
         <SectionCard
           title={editingId ? 'Update demand' : 'Create demand'}
-          subtitle="Capture product, quantity, required date, and target price."
+          subtitle="Capture product, quantity, required date, and target price. Reserved demands must go through a change request."
         >
           <Stack spacing={2} component="form" onSubmit={handleSubmit}>
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
@@ -168,14 +235,52 @@ function RetailerDashboard() {
                 label: 'Actions',
                 type: 'actions',
                 actions: (row) => [
-                  { label: 'Edit', onClick: () => handleEdit(row) },
-                  { label: 'Delete', color: 'error', onClick: () => handleDelete(row.id) },
+                  { label: 'Edit', onClick: () => handleEdit(row), disabled: row.status !== 'OPEN' },
+                  { label: 'Delete', color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'OPEN' },
+                  { label: 'Request Change', onClick: () => openChangeModal(row), disabled: row.status !== 'RESERVED' },
                 ],
               },
             ]}
           />
         </SectionCard>
       </Box>
+
+      <Dialog open={changeModal.open} onClose={changeModal.saving ? undefined : closeChangeModal} fullWidth maxWidth="sm">
+        <Box component="form" onSubmit={handleChangeRequestSubmit}>
+          <DialogTitle>Request Demand Change</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField label="Quantity" name="quantity" type="number" value={changeModal.quantity} onChange={handleChangeRequestField} required />
+              <TextField
+                label="Required date"
+                name="requiredDate"
+                type="date"
+                value={changeModal.requiredDate}
+                onChange={handleChangeRequestField}
+                InputLabelProps={{ shrink: true }}
+                required
+              />
+              <TextField label="Target price" name="targetPrice" type="number" value={changeModal.targetPrice} onChange={handleChangeRequestField} required />
+              <TextField
+                label="Reason"
+                name="reason"
+                value={changeModal.reason}
+                onChange={handleChangeRequestField}
+                required
+                multiline
+                minRows={3}
+                helperText="Admin will review this request against the reserved harvest."
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeChangeModal} disabled={changeModal.saving}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={changeModal.saving || !changeModal.reason.trim()}>
+              {changeModal.saving ? 'Sending...' : 'Send Request'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
     </DashboardShell>
   );
 }

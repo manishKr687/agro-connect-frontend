@@ -223,6 +223,43 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.workflow-tabs {
+  margin-bottom: 22px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 252, 245, 0.72);
+}
+
+.workflow-tabs .MuiTabs-indicator {
+  display: none;
+}
+
+.workflow-tabs .MuiTab-root {
+  min-height: 44px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: none;
+}
+
+.workflow-tabs .Mui-selected {
+  color: #fff !important;
+  background: var(--primary);
+}
+
+.workflow-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.workflow-hint {
+  color: var(--primary);
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em;
+}
+
 .section-card {
   border-radius: 28px;
   padding: 28px;
