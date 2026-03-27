@@ -9,6 +9,7 @@ import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
+import HINDI_CROP_NAMES from '../utils/hindiCropNames';
 
 const emptyHarvest = { cropName: '', quantity: '', harvestDate: '', expectedPrice: '' };
 
@@ -22,6 +23,8 @@ function FarmerDashboard() {
   const [status, setStatus]           = useState({ type: '', message: '' });
   const [loading, setLoading]         = useState(false);
   const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
+  const [cropNameHint, setCropNameHint] = useState('');
+  const [cropDisplayName, setCropDisplayName] = useState('');
 
   const fetchHarvests = async () => {
     try {
@@ -34,6 +37,13 @@ function FarmerDashboard() {
 
   useEffect(() => { fetchHarvests(); }, []);
 
+  useEffect(() => {
+    if (!form.cropName) return;
+    const isHindi = i18n.language.startsWith('hi');
+    const hindiName = HINDI_CROP_NAMES[form.cropName];
+    setCropDisplayName(isHindi && hindiName ? hindiName : form.cropName);
+  }, [i18n.language]);
+
   const stats = useMemo(() => [
     { label: t('farmer.stats.entries'),   value: harvests.length,                                              note: t('farmer.stats.entriesNote') },
     { label: t('farmer.stats.available'), value: harvests.filter((h) => h.status === 'AVAILABLE').length,      note: t('farmer.stats.availableNote') },
@@ -42,10 +52,31 @@ function FarmerDashboard() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'cropName') setCropDisplayName(value);
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const resetForm = () => { setForm(emptyHarvest); setEditingId(null); };
+  const resetForm = () => { setForm(emptyHarvest); setEditingId(null); setCropNameHint(''); setCropDisplayName(''); };
+
+  const handleCropNameBlur = async (e) => {
+    const raw = e.target.value.trim();
+    if (!raw) return;
+    try {
+      const response = await axiosInstance.get(`/api/crops/normalize?name=${encodeURIComponent(raw)}`);
+      const { normalized, corrected, valid } = response.data;
+      const isHindi = i18n.language.startsWith('hi');
+      const hindiName = HINDI_CROP_NAMES[normalized];
+      if (!valid) {
+        setCropNameHint(isHindi ? '⚠ फसल का नाम मान्य नहीं है। कृपया सही फसल का नाम दर्ज करें।' : '⚠ Crop name not recognized. Please enter a valid crop name.');
+      } else {
+        setForm((current) => ({ ...current, cropName: normalized }));
+        setCropDisplayName(isHindi && hindiName ? hindiName : normalized);
+        setCropNameHint(corrected ? (isHindi && hindiName ? `(${normalized})` : `Corrected to: ${normalized}`) : '');
+      }
+    } catch {
+      setCropNameHint('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,8 +111,13 @@ function FarmerDashboard() {
       return;
     }
     setEditingId(harvest.id);
+    const englishName = harvest.cropName || '';
+    const isHindi = i18n.language.startsWith('hi');
+    const hindiName = HINDI_CROP_NAMES[englishName];
+    setCropDisplayName(isHindi && hindiName ? hindiName : englishName);
+    setCropNameHint('');
     setForm({
-      cropName: harvest.cropName || '',
+      cropName: englishName,
       quantity: String(harvest.quantity || ''),
       harvestDate: harvest.harvestDate || '',
       expectedPrice: String(harvest.expectedPrice || ''),
@@ -136,7 +172,7 @@ function FarmerDashboard() {
 
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
-            <TextField label={t('farmer.form.productName')}     name="cropName"      value={form.cropName}      onChange={handleChange} required />
+            <TextField label={t('farmer.form.productName')} name="cropName" value={cropDisplayName} onChange={handleChange} onBlur={handleCropNameBlur} helperText={cropNameHint} required />
             <TextField label={t('farmer.form.quantity')}        name="quantity"      type="number" value={form.quantity}  onChange={handleChange} required />
             <TextField
               label={t('farmer.form.availabilityDate')}

@@ -9,6 +9,7 @@ import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
+import HINDI_CROP_NAMES from '../utils/hindiCropNames';
 
 const emptyDemand = { cropName: '', quantity: '', requiredDate: '', targetPrice: '' };
 
@@ -21,6 +22,8 @@ function RetailerDashboard() {
   const [editingId, setEditingId] = useState(null);
   const [status, setStatus]       = useState({ type: '', message: '' });
   const [loading, setLoading]     = useState(false);
+  const [cropNameHint, setCropNameHint] = useState('');
+  const [cropDisplayName, setCropDisplayName] = useState('');
   const [changeModal, setChangeModal] = useState({
     open: false, demandId: null, quantity: '', requiredDate: '', targetPrice: '', reason: '', saving: false,
   });
@@ -36,6 +39,13 @@ function RetailerDashboard() {
 
   useEffect(() => { fetchDemands(); }, []);
 
+  useEffect(() => {
+    if (!form.cropName) return;
+    const isHindi = i18n.language.startsWith('hi');
+    const hindiName = HINDI_CROP_NAMES[form.cropName];
+    setCropDisplayName(isHindi && hindiName ? hindiName : form.cropName);
+  }, [i18n.language]);
+
   const stats = useMemo(() => [
     { label: t('retailer.stats.requests'), value: demands.length,                                              note: t('retailer.stats.requestsNote') },
     { label: t('retailer.stats.open'),     value: demands.filter((d) => d.status === 'OPEN').length,           note: t('retailer.stats.openNote') },
@@ -44,10 +54,31 @@ function RetailerDashboard() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'cropName') setCropDisplayName(value);
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const resetForm = () => { setForm(emptyDemand); setEditingId(null); };
+  const resetForm = () => { setForm(emptyDemand); setEditingId(null); setCropNameHint(''); setCropDisplayName(''); };
+
+  const handleCropNameBlur = async (e) => {
+    const raw = e.target.value.trim();
+    if (!raw) return;
+    try {
+      const response = await axiosInstance.get(`/api/crops/normalize?name=${encodeURIComponent(raw)}`);
+      const { normalized, corrected, valid } = response.data;
+      const isHindi = i18n.language.startsWith('hi');
+      const hindiName = HINDI_CROP_NAMES[normalized];
+      if (!valid) {
+        setCropNameHint(isHindi ? '⚠ फसल का नाम मान्य नहीं है। कृपया सही फसल का नाम दर्ज करें।' : '⚠ Crop name not recognized. Please enter a valid crop name.');
+      } else {
+        setForm((current) => ({ ...current, cropName: normalized }));
+        setCropDisplayName(isHindi && hindiName ? hindiName : normalized);
+        setCropNameHint(corrected ? (isHindi && hindiName ? `(${normalized})` : `Corrected to: ${normalized}`) : '');
+      }
+    } catch {
+      setCropNameHint('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,8 +113,13 @@ function RetailerDashboard() {
       return;
     }
     setEditingId(demand.id);
+    const englishName = demand.cropName || '';
+    const isHindi = i18n.language.startsWith('hi');
+    const hindiName = HINDI_CROP_NAMES[englishName];
+    setCropDisplayName(isHindi && hindiName ? hindiName : englishName);
+    setCropNameHint('');
     setForm({
-      cropName: demand.cropName || '',
+      cropName: englishName,
       quantity: String(demand.quantity || ''),
       requiredDate: demand.requiredDate || '',
       targetPrice: String(demand.targetPrice || ''),
@@ -144,7 +180,7 @@ function RetailerDashboard() {
 
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
-            <TextField label={t('retailer.form.productName')} name="cropName"    value={form.cropName}    onChange={handleChange} required />
+            <TextField label={t('retailer.form.productName')} name="cropName" value={cropDisplayName} onChange={handleChange} onBlur={handleCropNameBlur} helperText={cropNameHint} required />
             <TextField label={t('retailer.form.quantity')}    name="quantity"    type="number" value={form.quantity} onChange={handleChange} required />
             <TextField
               label={t('retailer.form.requiredDate')}
