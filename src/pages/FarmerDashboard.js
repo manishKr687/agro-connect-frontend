@@ -1,24 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, IconButton, Stack, TextField,
-  Tooltip, Typography,
+  Alert, Box, Button, Dialog, DialogActions,
+  DialogContent, DialogTitle, Stack, TextField,
 } from '@mui/material';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import MicIcon from '@mui/icons-material/Mic';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
-import { useProduceDetection } from '../hooks/useProduceDetection';
 
 const emptyHarvest = { cropName: '', quantity: '', harvestDate: '', expectedPrice: '' };
 
 function FarmerDashboard() {
   const session = getSession();
-  const { t }   = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [harvests, setHarvests]       = useState([]);
   const [form, setForm]               = useState(emptyHarvest);
@@ -26,17 +22,6 @@ function FarmerDashboard() {
   const [status, setStatus]           = useState({ type: '', message: '' });
   const [loading, setLoading]         = useState(false);
   const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
-
-  const { aiLoading, aiError, recording, fileInputRef, preloadModel, triggerCamera, analyzeImage, startVoice, clearAiError } = useProduceDetection();
-
-  const handleAiResult = ({ cropName, quantity, price }) => {
-    setForm((current) => ({
-      ...current,
-      ...(cropName ? { cropName }                     : {}),
-      ...(quantity ? { quantity: String(quantity) }   : {}),
-      ...(price    ? { expectedPrice: String(price) } : {}),
-    }));
-  };
 
   const fetchHarvests = async () => {
     try {
@@ -47,20 +32,20 @@ function FarmerDashboard() {
     }
   };
 
-  useEffect(() => { fetchHarvests(); preloadModel(); }, []);
+  useEffect(() => { fetchHarvests(); }, []);
 
   const stats = useMemo(() => [
     { label: t('farmer.stats.entries'),   value: harvests.length,                                              note: t('farmer.stats.entriesNote') },
     { label: t('farmer.stats.available'), value: harvests.filter((h) => h.status === 'AVAILABLE').length,      note: t('farmer.stats.availableNote') },
     { label: t('farmer.stats.quantity'),  value: harvests.reduce((s, h) => s + Number(h.quantity || 0), 0).toFixed(1), note: t('farmer.stats.quantityNote') },
-  ], [harvests, t]);
+  ], [harvests, t, i18n.language]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const resetForm = () => { setForm(emptyHarvest); setEditingId(null); clearAiError(); };
+  const resetForm = () => { setForm(emptyHarvest); setEditingId(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -142,19 +127,6 @@ function FarmerDashboard() {
       subtitle={t('farmer.dashboardSubtitle', { username: session.username })}
       stats={stats}
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const file = e.target.files[0];
-          if (file) analyzeImage(file, handleAiResult);
-          e.target.value = '';
-        }}
-      />
-
       <Box className="dashboard-grid">
         <SectionCard
           title={editingId ? t('farmer.form.editTitle') : t('farmer.form.addTitle')}
@@ -162,34 +134,6 @@ function FarmerDashboard() {
         >
           <Stack spacing={2} component="form" onSubmit={handleSubmit}>
 
-            {/* AI Input Toolbar */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1, border: '1px dashed', borderColor: 'grey.300' }}>
-              <Tooltip title={t('farmer.ai.cameraTooltip')}>
-                <span>
-                  <IconButton onClick={triggerCamera} disabled={aiLoading} size="small" color="primary">
-                    {aiLoading ? <CircularProgress size={20} /> : <CameraAltIcon fontSize="small" />}
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title={recording ? t('farmer.ai.micStopTooltip') : t('farmer.ai.micTooltip')}>
-                <span>
-                  <IconButton
-                    onClick={() => startVoice(handleAiResult)}
-                    disabled={aiLoading && !recording}
-                    size="small"
-                    color={recording ? 'error' : 'primary'}
-                    sx={recording ? { animation: 'pulse 1s infinite' } : {}}
-                  >
-                    <MicIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Typography variant="caption" sx={{ color: recording ? 'error.main' : 'text.secondary' }}>
-                {recording ? t('farmer.ai.recording') : aiLoading ? t('common.processing') : t('farmer.ai.hint')}
-              </Typography>
-            </Box>
-
-            {aiError   ? <Alert severity="warning" onClose={clearAiError}>{aiError}</Alert> : null}
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
             <TextField label={t('farmer.form.productName')}     name="cropName"      value={form.cropName}      onChange={handleChange} required />

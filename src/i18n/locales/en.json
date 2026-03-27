@@ -130,6 +130,49 @@
       "withdrawal": "Withdrawal request sent to admin for resolution."
     }
   },
+  "agent": {
+    "dashboardTitle": "Agent Dashboard",
+    "dashboardSubtitle": "Logged in as {{username}}. Only assigned delivery tasks are visible here.",
+    "stats": {
+      "assigned": "Assigned tasks",
+      "assignedNote": "Current tasks allocated to you",
+      "inTransit": "In transit",
+      "inTransitNote": "Loads already on the move",
+      "delivered": "Delivered",
+      "deliveredNote": "Completed deliveries"
+    },
+    "section": {
+      "title": "Assigned delivery tasks",
+      "subtitle": "Review pickup and delivery details, then update status."
+    },
+    "task": {
+      "harvest": "Harvest",
+      "farmer": "Farmer",
+      "retailer": "Retailer",
+      "demand": "Demand",
+      "needBy": "Need by"
+    },
+    "action": {
+      "accept": "Accept",
+      "reject": "Reject",
+      "rejectReason": "Reject reason",
+      "pickedUp": "Picked Up",
+      "inTransit": "In Transit",
+      "delivered": "Delivered"
+    },
+    "empty": "No tasks assigned right now.",
+    "error": {
+      "load": "Unable to load assigned tasks.",
+      "update": "Unable to update task status."
+    },
+    "success": {
+      "accepted": "Task accepted.",
+      "rejected": "Task rejected.",
+      "pickedUp": "Task marked as picked up.",
+      "inTransit": "Task marked as in transit.",
+      "delivered": "Task marked as delivered."
+    }
+  },
   "retailer": {
     "dashboardTitle": "Retailer Dashboard",
     "dashboardSubtitle": "Logged in as {{username}}. Create demand requests and keep purchasing needs up to date.",

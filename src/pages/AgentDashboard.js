@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, Button, Stack, TextField } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import SectionCard from '../components/SectionCard';
@@ -7,6 +8,7 @@ import { getSession } from '../utils/session';
 
 function AgentDashboard() {
   const session = getSession();
+  const { t, i18n } = useTranslation();
   const [tasks, setTasks] = useState([]);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [rejectionReason, setRejectionReason] = useState({});
@@ -16,7 +18,7 @@ function AgentDashboard() {
       const response = await axiosInstance.get(`/api/agents/${session.userId}/tasks`);
       setTasks(response.data);
     } catch (error) {
-      setStatus({ type: 'error', message: 'Unable to load assigned tasks.' });
+      setStatus({ type: 'error', message: t('agent.error.load') });
     }
   };
 
@@ -25,34 +27,34 @@ function AgentDashboard() {
   }, []);
 
   const stats = useMemo(() => [
-    { label: 'Assigned tasks', value: tasks.length, note: 'Current tasks allocated to you' },
-    { label: 'In transit', value: tasks.filter((item) => item.status === 'IN_TRANSIT').length, note: 'Loads already on the move' },
-    { label: 'Delivered', value: tasks.filter((item) => item.status === 'DELIVERED').length, note: 'Completed deliveries' },
-  ], [tasks]);
+    { label: t('agent.stats.assigned'),  value: tasks.length,                                                     note: t('agent.stats.assignedNote') },
+    { label: t('agent.stats.inTransit'), value: tasks.filter((item) => item.status === 'IN_TRANSIT').length,      note: t('agent.stats.inTransitNote') },
+    { label: t('agent.stats.delivered'), value: tasks.filter((item) => item.status === 'DELIVERED').length,       note: t('agent.stats.deliveredNote') },
+  ], [tasks, t, i18n.language]);
 
-  const performTaskAction = async (taskId, action, body = null, successMessage = 'Task updated.') => {
+  const performTaskAction = async (taskId, action, body = null, successKey = 'agent.success.accepted') => {
     try {
       await axiosInstance.post(`/api/agents/${session.userId}/tasks/${taskId}/${action}`, body);
-      setStatus({ type: 'success', message: successMessage });
+      setStatus({ type: 'success', message: t(successKey) });
       fetchTasks();
     } catch (error) {
-      setStatus({ type: 'error', message: error.response?.data?.message || 'Unable to update task status.' });
+      setStatus({ type: 'error', message: error.response?.data?.message || t('agent.error.update') });
     }
   };
 
   return (
     <DashboardShell
       role="AGENT"
-      title="Agent Dashboard"
-      subtitle={`Logged in as ${session.username}. Only assigned delivery tasks are visible here.`}
+      title={t('agent.dashboardTitle')}
+      subtitle={t('agent.dashboardSubtitle', { username: session.username })}
       stats={stats}
     >
-      <SectionCard title="Assigned delivery tasks" subtitle="Review pickup and delivery details, then update status.">
+      <SectionCard title={t('agent.section.title')} subtitle={t('agent.section.subtitle')}>
         {status.message ? <Alert severity={status.type || 'info'} sx={{ mb: 2 }}>{status.message}</Alert> : null}
 
         <Box className="task-grid">
           {tasks.length === 0 ? (
-            <Box className="empty-state">No tasks assigned right now.</Box>
+            <Box className="empty-state">{t('agent.empty')}</Box>
           ) : (
             tasks.map((task) => (
               <Box key={task.id} className="task-card">
@@ -64,20 +66,20 @@ function AgentDashboard() {
                 </Box>
 
                 <div className="task-card__meta">
-                  <div><strong>Harvest:</strong> {task.harvest?.cropName} | {task.harvest?.quantity} units | Price {task.harvest?.expectedPrice}</div>
-                  <div><strong>Farmer:</strong> {task.harvest?.farmer?.username || '—'}</div>
-                  <div><strong>Retailer:</strong> {task.demand?.retailer?.username || '—'}</div>
-                  <div><strong>Demand:</strong> {task.demand?.cropName} | {task.demand?.quantity} units | Need by {task.demand?.requiredDate}</div>
+                  <div><strong>{t('agent.task.harvest')}:</strong> {task.harvest?.cropName} | {task.harvest?.quantity} units | Price {task.harvest?.expectedPrice}</div>
+                  <div><strong>{t('agent.task.farmer')}:</strong> {task.harvest?.farmer?.username || '—'}</div>
+                  <div><strong>{t('agent.task.retailer')}:</strong> {task.demand?.retailer?.username || '—'}</div>
+                  <div><strong>{t('agent.task.demand')}:</strong> {task.demand?.cropName} | {task.demand?.quantity} units | {t('agent.task.needBy')} {task.demand?.requiredDate}</div>
                 </div>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} className="task-card__actions">
                   {task.status === 'ASSIGNED' ? (
                     <>
-                      <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'accept', null, 'Task accepted.')}>
-                        Accept
+                      <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'accept', null, 'agent.success.accepted')}>
+                        {t('agent.action.accept')}
                       </Button>
                       <TextField
-                        label="Reject reason"
+                        label={t('agent.action.rejectReason')}
                         size="small"
                         value={rejectionReason[task.id] || ''}
                         onChange={(event) => setRejectionReason((current) => ({ ...current, [task.id]: event.target.value }))}
@@ -85,28 +87,28 @@ function AgentDashboard() {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => performTaskAction(task.id, 'reject', { reason: rejectionReason[task.id] || 'Unavailable' }, 'Task rejected.')}
+                        onClick={() => performTaskAction(task.id, 'reject', { reason: rejectionReason[task.id] || 'Unavailable' }, 'agent.success.rejected')}
                       >
-                        Reject
+                        {t('agent.action.reject')}
                       </Button>
                     </>
                   ) : null}
 
                   {task.status === 'ACCEPTED' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'pickup', null, 'Task marked as picked up.')}>
-                      Picked Up
+                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'pickup', null, 'agent.success.pickedUp')}>
+                      {t('agent.action.pickedUp')}
                     </Button>
                   ) : null}
 
                   {task.status === 'PICKED_UP' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'in-transit', null, 'Task marked as in transit.')}>
-                      In Transit
+                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'in-transit', null, 'agent.success.inTransit')}>
+                      {t('agent.action.inTransit')}
                     </Button>
                   ) : null}
 
                   {task.status === 'IN_TRANSIT' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'deliver', null, 'Task marked as delivered.')}>
-                      Delivered
+                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'deliver', null, 'agent.success.delivered')}>
+                      {t('agent.action.delivered')}
                     </Button>
                   ) : null}
                 </Stack>

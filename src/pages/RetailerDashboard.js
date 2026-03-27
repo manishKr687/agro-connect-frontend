@@ -1,24 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, IconButton, Stack, TextField,
-  Tooltip, Typography,
+  Alert, Box, Button, Dialog, DialogActions,
+  DialogContent, DialogTitle, Stack, TextField,
 } from '@mui/material';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import MicIcon from '@mui/icons-material/Mic';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
-import { useProduceDetection } from '../hooks/useProduceDetection';
 
 const emptyDemand = { cropName: '', quantity: '', requiredDate: '', targetPrice: '' };
 
 function RetailerDashboard() {
   const session = getSession();
-  const { t }   = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [demands, setDemands]     = useState([]);
   const [form, setForm]           = useState(emptyDemand);
@@ -29,17 +25,6 @@ function RetailerDashboard() {
     open: false, demandId: null, quantity: '', requiredDate: '', targetPrice: '', reason: '', saving: false,
   });
 
-  const { aiLoading, aiError, recording, fileInputRef, preloadModel, triggerCamera, analyzeImage, startVoice, clearAiError } = useProduceDetection();
-
-  const handleAiResult = ({ cropName, quantity, price }) => {
-    setForm((current) => ({
-      ...current,
-      ...(cropName ? { cropName }                   : {}),
-      ...(quantity ? { quantity: String(quantity) } : {}),
-      ...(price    ? { targetPrice: String(price) } : {}),
-    }));
-  };
-
   const fetchDemands = async () => {
     try {
       const response = await axiosInstance.get(`/api/retailers/${session.userId}/demands`);
@@ -49,20 +34,20 @@ function RetailerDashboard() {
     }
   };
 
-  useEffect(() => { fetchDemands(); preloadModel(); }, []);
+  useEffect(() => { fetchDemands(); }, []);
 
   const stats = useMemo(() => [
     { label: t('retailer.stats.requests'), value: demands.length,                                              note: t('retailer.stats.requestsNote') },
     { label: t('retailer.stats.open'),     value: demands.filter((d) => d.status === 'OPEN').length,           note: t('retailer.stats.openNote') },
     { label: t('retailer.stats.reserved'), value: demands.filter((d) => d.status === 'RESERVED').length,       note: t('retailer.stats.reservedNote') },
-  ], [demands, t]);
+  ], [demands, t, i18n.language]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const resetForm = () => { setForm(emptyDemand); setEditingId(null); clearAiError(); };
+  const resetForm = () => { setForm(emptyDemand); setEditingId(null); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,19 +135,6 @@ function RetailerDashboard() {
       subtitle={t('retailer.dashboardSubtitle', { username: session.username })}
       stats={stats}
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const file = e.target.files[0];
-          if (file) analyzeImage(file, handleAiResult);
-          e.target.value = '';
-        }}
-      />
-
       <Box className="dashboard-grid">
         <SectionCard
           title={editingId ? t('retailer.form.editTitle') : t('retailer.form.createTitle')}
@@ -170,34 +142,6 @@ function RetailerDashboard() {
         >
           <Stack spacing={2} component="form" onSubmit={handleSubmit}>
 
-            {/* AI Input Toolbar */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1, border: '1px dashed', borderColor: 'grey.300' }}>
-              <Tooltip title={t('retailer.ai.cameraTooltip')}>
-                <span>
-                  <IconButton onClick={triggerCamera} disabled={aiLoading} size="small" color="primary">
-                    {aiLoading ? <CircularProgress size={20} /> : <CameraAltIcon fontSize="small" />}
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title={recording ? t('retailer.ai.micStopTooltip') : t('retailer.ai.micTooltip')}>
-                <span>
-                  <IconButton
-                    onClick={() => startVoice(handleAiResult)}
-                    disabled={aiLoading && !recording}
-                    size="small"
-                    color={recording ? 'error' : 'primary'}
-                    sx={recording ? { animation: 'pulse 1s infinite' } : {}}
-                  >
-                    <MicIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Typography variant="caption" sx={{ color: recording ? 'error.main' : 'text.secondary' }}>
-                {recording ? t('retailer.ai.recording') : aiLoading ? t('common.processing') : t('retailer.ai.hint')}
-              </Typography>
-            </Box>
-
-            {aiError ? <Alert severity="warning" onClose={clearAiError}>{aiError}</Alert> : null}
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
             <TextField label={t('retailer.form.productName')} name="cropName"    value={form.cropName}    onChange={handleChange} required />
