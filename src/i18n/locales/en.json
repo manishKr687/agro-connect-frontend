@@ -1,0 +1,198 @@
+{
+  "common": {
+    "appName": "AgroConnect",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "home": "Home",
+    "getStarted": "Get Started",
+    "join": "Join",
+    "joinFarmer": "Join as Farmer",
+    "joinMediator": "Join as Mediator",
+    "joinRetailer": "Join as Retailer",
+    "backToRoles": "Back to roles",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "edit": "Edit",
+    "delete": "Delete",
+    "saving": "Saving...",
+    "processing": "Processing...",
+    "language": "Language"
+  },
+  "home": {
+    "chip": "Agro Connect Marketplace",
+    "title": "Simple role-based workflows for agriculture trade.",
+    "description": "Choose a role to access dedicated login, registration, and dashboard flows for harvests, demands, assignments, and delivery updates.",
+    "farmer": {
+      "label": "Farmer",
+      "blurb": "List harvest supply, track pricing, and manage availability.",
+      "login": "Farmer Login",
+      "register": "Farmer Register"
+    },
+    "retailer": {
+      "label": "Retailer",
+      "blurb": "Post buying demand and monitor matching supply requests.",
+      "login": "Retailer Login",
+      "register": "Retailer Register"
+    },
+    "agent": {
+      "label": "Agent",
+      "blurb": "See assigned pickups and update delivery progress clearly.",
+      "login": "Agent Login",
+      "register": "Agent Register"
+    },
+    "admin": {
+      "label": "Admin",
+      "blurb": "Supervise supply, demand, matching, and delivery assignments.",
+      "login": "Admin Login",
+      "register": "Admin Register"
+    }
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "assignedRole": "Assigned Role",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "needAccount": "Need an account? Register",
+    "alreadyRegistered": "Already registered? Login",
+    "formTitle": "Access your role workspace",
+    "formTitleRegister": "Create your role account",
+    "formCopy": "Role is assigned automatically from this page.",
+    "error": {
+      "required": "Username and password are required.",
+      "passwordMismatch": "Passwords do not match.",
+      "wrongRole": "This page is only for {{role}} accounts.",
+      "requestFailed": "Unable to complete the request."
+    }
+  },
+  "farmer": {
+    "dashboardTitle": "Farmer Dashboard",
+    "dashboardSubtitle": "Logged in as {{username}}. Add harvest supply, maintain pricing, and keep availability accurate.",
+    "stats": {
+      "entries": "Harvest entries",
+      "entriesNote": "Current records in your supply list",
+      "available": "Available lots",
+      "availableNote": "Ready for matching by admin",
+      "quantity": "Total quantity",
+      "quantityNote": "Combined quantity across all harvests"
+    },
+    "form": {
+      "addTitle": "Add harvest",
+      "editTitle": "Update harvest",
+      "subtitle": "Fill in crop, quantity, expected price, and availability date. Only available harvests can be changed directly.",
+      "productName": "Product name",
+      "quantity": "Quantity",
+      "availabilityDate": "Availability date",
+      "price": "Price",
+      "addButton": "Add Harvest",
+      "updateButton": "Update Harvest"
+    },
+    "ai": {
+      "cameraTooltip": "Take a photo to auto-detect crop name",
+      "micTooltip": "Say e.g. \"50 kg tomatoes at 30 rupees\" to auto-fill all fields",
+      "micStopTooltip": "Click to stop recording",
+      "recording": "Recording... click mic to stop",
+      "hint": "Use camera or voice to auto-fill fields"
+    },
+    "table": {
+      "title": "My harvests",
+      "subtitle": "Only your records are shown here.",
+      "empty": "No harvest entries yet.",
+      "product": "Product",
+      "quantity": "Quantity",
+      "price": "Price",
+      "availability": "Availability",
+      "status": "Status",
+      "actions": "Actions",
+      "requestWithdrawal": "Request Withdrawal"
+    },
+    "withdrawal": {
+      "title": "Request Withdrawal",
+      "reason": "Reason",
+      "helperText": "This will raise an admin exception for the reserved harvest.",
+      "sendButton": "Send Request",
+      "sending": "Sending..."
+    },
+    "error": {
+      "load": "Unable to load harvest entries.",
+      "save": "Unable to save harvest entry.",
+      "delete": "Unable to delete harvest entry.",
+      "editRestricted": "Only available harvests can be edited.",
+      "withdrawal": "Unable to request withdrawal."
+    },
+    "success": {
+      "added": "Harvest entry added.",
+      "updated": "Harvest entry updated.",
+      "deleted": "Harvest entry deleted.",
+      "withdrawal": "Withdrawal request sent to admin for resolution."
+    }
+  },
+  "retailer": {
+    "dashboardTitle": "Retailer Dashboard",
+    "dashboardSubtitle": "Logged in as {{username}}. Create demand requests and keep purchasing needs up to date.",
+    "stats": {
+      "requests": "Demand requests",
+      "requestsNote": "Requests created by your business",
+      "open": "Open requests",
+      "openNote": "Available for matching",
+      "reserved": "Reserved requests",
+      "reservedNote": "Already linked to a supply lot"
+    },
+    "form": {
+      "createTitle": "Create demand",
+      "editTitle": "Update demand",
+      "subtitle": "Capture product, quantity, required date, and target price. Reserved demands must go through a change request.",
+      "productName": "Product name",
+      "quantity": "Quantity",
+      "requiredDate": "Required date",
+      "targetPrice": "Target price",
+      "createButton": "Create Demand",
+      "updateButton": "Update Demand"
+    },
+    "ai": {
+      "cameraTooltip": "Take a photo to auto-detect crop name",
+      "micTooltip": "Say e.g. \"50 kg tomatoes at 30 rupees\" to auto-fill all fields",
+      "micStopTooltip": "Click to stop recording",
+      "recording": "Recording... click mic to stop",
+      "hint": "Use camera or voice to auto-fill fields"
+    },
+    "table": {
+      "title": "My demand requests",
+      "subtitle": "Only your own requests are listed.",
+      "empty": "No demand requests yet.",
+      "product": "Product",
+      "quantity": "Quantity",
+      "targetPrice": "Target price",
+      "requiredDate": "Required date",
+      "status": "Status",
+      "actions": "Actions",
+      "requestChange": "Request Change"
+    },
+    "changeRequest": {
+      "title": "Request Demand Change",
+      "quantity": "Quantity",
+      "requiredDate": "Required date",
+      "targetPrice": "Target price",
+      "reason": "Reason",
+      "helperText": "Admin will review this request against the reserved harvest.",
+      "sendButton": "Send Request",
+      "sending": "Sending..."
+    },
+    "error": {
+      "load": "Unable to load demand requests.",
+      "save": "Unable to save demand request.",
+      "delete": "Unable to delete demand request.",
+      "editRestricted": "Only open demands can be edited directly.",
+      "changeRequest": "Unable to request demand change."
+    },
+    "success": {
+      "created": "Demand request created.",
+      "updated": "Demand request updated.",
+      "deleted": "Demand request deleted.",
+      "changeRequest": "Demand change request sent to admin for review."
+    }
+  }
+}

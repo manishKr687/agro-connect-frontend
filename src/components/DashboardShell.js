@@ -6,9 +6,13 @@ import {
   Chip,
   Container,
   Divider,
+  Menu,
+  MenuItem,
   Stack,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { clearSession, ROLE_META } from '../utils/session';
 
 function DashboardShell({
@@ -19,12 +23,21 @@ function DashboardShell({
   actions = [],
   children,
 }) {
-  const navigate = useNavigate();
-  const roleMeta = ROLE_META[role];
+  const navigate        = useNavigate();
+  const { t }          = useTranslation();
+  const roleMeta        = ROLE_META[role];
+  const [langAnchor, setLangAnchor] = React.useState(null);
+  const [currentLang, setCurrentLang] = React.useState(i18n.language || 'en');
 
   const handleLogout = () => {
     clearSession();
     navigate(roleMeta?.loginPath || '/');
+  };
+
+  const switchLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+    setCurrentLang(lang);
+    setLangAnchor(null);
   };
 
   return (
@@ -41,10 +54,17 @@ function DashboardShell({
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <Button component={RouterLink} to="/" variant="outlined" className="ghost-button">
-              Home
+              {t('common.home')}
             </Button>
+            <Button size="small" variant="outlined" onClick={(e) => setLangAnchor(e.currentTarget)}>
+              {currentLang === 'hi' ? 'हिं' : 'EN'}
+            </Button>
+            <Menu anchorEl={langAnchor} open={Boolean(langAnchor)} onClose={() => setLangAnchor(null)}>
+              <MenuItem onClick={() => switchLanguage('en')}>English</MenuItem>
+              <MenuItem onClick={() => switchLanguage('hi')}>हिंदी</MenuItem>
+            </Menu>
             <Button variant="contained" className="primary-button" onClick={handleLogout}>
-              Logout
+              {t('common.logout')}
             </Button>
           </Stack>
         </Box>

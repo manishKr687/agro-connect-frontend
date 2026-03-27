@@ -1,66 +1,71 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import {
+  Alert, Box, Button, CircularProgress, Dialog, DialogActions,
+  DialogContent, DialogTitle, IconButton, Stack, TextField,
+  Tooltip, Typography,
+} from '@mui/material';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import MicIcon from '@mui/icons-material/Mic';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
 import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
+import { useProduceDetection } from '../hooks/useProduceDetection';
 
-const emptyHarvest = {
-  cropName: '',
-  quantity: '',
-  harvestDate: '',
-  expectedPrice: '',
-};
+const emptyHarvest = { cropName: '', quantity: '', harvestDate: '', expectedPrice: '' };
 
 function FarmerDashboard() {
   const session = getSession();
-  const [harvests, setHarvests] = useState([]);
-  const [form, setForm] = useState(emptyHarvest);
-  const [editingId, setEditingId] = useState(null);
-  const [status, setStatus] = useState({ type: '', message: '' });
-  const [loading, setLoading] = useState(false);
+  const { t }   = useTranslation();
+
+  const [harvests, setHarvests]       = useState([]);
+  const [form, setForm]               = useState(emptyHarvest);
+  const [editingId, setEditingId]     = useState(null);
+  const [status, setStatus]           = useState({ type: '', message: '' });
+  const [loading, setLoading]         = useState(false);
   const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
+
+  const { aiLoading, aiError, recording, fileInputRef, preloadModel, triggerCamera, analyzeImage, startVoice, clearAiError } = useProduceDetection();
+
+  const handleAiResult = ({ cropName, quantity, price }) => {
+    setForm((current) => ({
+      ...current,
+      ...(cropName ? { cropName }                     : {}),
+      ...(quantity ? { quantity: String(quantity) }   : {}),
+      ...(price    ? { expectedPrice: String(price) } : {}),
+    }));
+  };
 
   const fetchHarvests = async () => {
     try {
       const response = await axiosInstance.get(`/api/farmers/${session.userId}/harvests`);
       setHarvests(response.data);
-    } catch (error) {
-      setStatus({ type: 'error', message: 'Unable to load harvest entries.' });
+    } catch {
+      setStatus({ type: 'error', message: t('farmer.error.load') });
     }
   };
 
-  useEffect(() => {
-    fetchHarvests();
-  }, []);
+  useEffect(() => { fetchHarvests(); preloadModel(); }, []);
 
-  const stats = useMemo(() => {
-    const totalQuantity = harvests.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-    const available = harvests.filter((item) => item.status === 'AVAILABLE').length;
+  const stats = useMemo(() => [
+    { label: t('farmer.stats.entries'),   value: harvests.length,                                              note: t('farmer.stats.entriesNote') },
+    { label: t('farmer.stats.available'), value: harvests.filter((h) => h.status === 'AVAILABLE').length,      note: t('farmer.stats.availableNote') },
+    { label: t('farmer.stats.quantity'),  value: harvests.reduce((s, h) => s + Number(h.quantity || 0), 0).toFixed(1), note: t('farmer.stats.quantityNote') },
+  ], [harvests, t]);
 
-    return [
-      { label: 'Harvest entries', value: harvests.length, note: 'Current records in your supply list' },
-      { label: 'Available lots', value: available, note: 'Ready for matching by admin' },
-      { label: 'Total quantity', value: totalQuantity.toFixed(1), note: 'Combined quantity across all harvests' },
-    ];
-  }, [harvests]);
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const resetForm = () => {
-    setForm(emptyHarvest);
-    setEditingId(null);
-  };
+  const resetForm = () => { setForm(emptyHarvest); setEditingId(null); clearAiError(); };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setStatus({ type: '', message: '' });
-
     try {
       const payload = {
         cropName: form.cropName.trim(),
@@ -68,19 +73,17 @@ function FarmerDashboard() {
         harvestDate: form.harvestDate,
         expectedPrice: Number(form.expectedPrice),
       };
-
       if (editingId) {
         await axiosInstance.put(`/api/farmers/${session.userId}/harvests/${editingId}`, payload);
-        setStatus({ type: 'success', message: 'Harvest entry updated.' });
+        setStatus({ type: 'success', message: t('farmer.success.updated') });
       } else {
         await axiosInstance.post(`/api/farmers/${session.userId}/harvests`, payload);
-        setStatus({ type: 'success', message: 'Harvest entry added.' });
+        setStatus({ type: 'success', message: t('farmer.success.added') });
       }
-
       resetForm();
       fetchHarvests();
     } catch (error) {
-      setStatus({ type: 'error', message: error.response?.data?.message || 'Unable to save harvest entry.' });
+      setStatus({ type: 'error', message: error.response?.data?.message || t('farmer.error.save') });
     } finally {
       setLoading(false);
     }
@@ -88,10 +91,9 @@ function FarmerDashboard() {
 
   const handleEdit = (harvest) => {
     if (harvest.status !== 'AVAILABLE') {
-      setStatus({ type: 'error', message: 'Only available harvests can be edited.' });
+      setStatus({ type: 'error', message: t('farmer.error.editRestricted') });
       return;
     }
-
     setEditingId(harvest.id);
     setForm({
       cropName: harvest.cropName || '',
@@ -105,66 +107,95 @@ function FarmerDashboard() {
   const handleDelete = async (harvestId) => {
     try {
       await axiosInstance.delete(`/api/farmers/${session.userId}/harvests/${harvestId}`);
-      if (editingId === harvestId) {
-        resetForm();
-      }
-      setStatus({ type: 'success', message: 'Harvest entry deleted.' });
+      if (editingId === harvestId) resetForm();
+      setStatus({ type: 'success', message: t('farmer.success.deleted') });
       fetchHarvests();
-    } catch (error) {
-      setStatus({ type: 'error', message: 'Unable to delete harvest entry.' });
+    } catch {
+      setStatus({ type: 'error', message: t('farmer.error.delete') });
     }
   };
 
-  const openWithdrawalModal = (harvestId) => {
-    setWithdrawalModal({ open: true, harvestId, reason: '', saving: false });
-    setStatus({ type: '', message: '' });
-  };
+  const openWithdrawalModal  = (harvestId) => setWithdrawalModal({ open: true, harvestId, reason: '', saving: false });
+  const closeWithdrawalModal = ()           => setWithdrawalModal({ open: false, harvestId: null, reason: '', saving: false });
 
-  const closeWithdrawalModal = () => {
-    setWithdrawalModal({ open: false, harvestId: null, reason: '', saving: false });
-  };
-
-  const handleWithdrawalChange = (event) => {
-    const { value } = event.target;
-    setWithdrawalModal((current) => ({ ...current, reason: value }));
-  };
-
-  const handleWithdrawalSubmit = async (event) => {
-    event.preventDefault();
-    setWithdrawalModal((current) => ({ ...current, saving: true }));
-
+  const handleWithdrawalSubmit = async (e) => {
+    e.preventDefault();
+    setWithdrawalModal((cur) => ({ ...cur, saving: true }));
     try {
       await axiosInstance.post(
         `/api/farmers/${session.userId}/harvests/${withdrawalModal.harvestId}/withdrawal-request`,
         { reason: withdrawalModal.reason.trim() },
       );
       closeWithdrawalModal();
-      setStatus({ type: 'success', message: 'Withdrawal request sent to admin for resolution.' });
+      setStatus({ type: 'success', message: t('farmer.success.withdrawal') });
       fetchHarvests();
     } catch (error) {
-      setWithdrawalModal((current) => ({ ...current, saving: false }));
-      setStatus({ type: 'error', message: error.response?.data?.message || 'Unable to request withdrawal.' });
+      setWithdrawalModal((cur) => ({ ...cur, saving: false }));
+      setStatus({ type: 'error', message: error.response?.data?.message || t('farmer.error.withdrawal') });
     }
   };
 
   return (
     <DashboardShell
       role="FARMER"
-      title="Farmer Dashboard"
-      subtitle={`Logged in as ${session.username}. Add harvest supply, maintain pricing, and keep availability accurate.`}
+      title={t('farmer.dashboardTitle')}
+      subtitle={t('farmer.dashboardSubtitle', { username: session.username })}
       stats={stats}
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) analyzeImage(file, handleAiResult);
+          e.target.value = '';
+        }}
+      />
+
       <Box className="dashboard-grid">
         <SectionCard
-          title={editingId ? 'Update harvest' : 'Add harvest'}
-          subtitle="Fill in crop, quantity, expected price, and availability date. Only available harvests can be changed directly."
+          title={editingId ? t('farmer.form.editTitle') : t('farmer.form.addTitle')}
+          subtitle={t('farmer.form.subtitle')}
         >
           <Stack spacing={2} component="form" onSubmit={handleSubmit}>
+
+            {/* AI Input Toolbar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1, border: '1px dashed', borderColor: 'grey.300' }}>
+              <Tooltip title={t('farmer.ai.cameraTooltip')}>
+                <span>
+                  <IconButton onClick={triggerCamera} disabled={aiLoading} size="small" color="primary">
+                    {aiLoading ? <CircularProgress size={20} /> : <CameraAltIcon fontSize="small" />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title={recording ? t('farmer.ai.micStopTooltip') : t('farmer.ai.micTooltip')}>
+                <span>
+                  <IconButton
+                    onClick={() => startVoice(handleAiResult)}
+                    disabled={aiLoading && !recording}
+                    size="small"
+                    color={recording ? 'error' : 'primary'}
+                    sx={recording ? { animation: 'pulse 1s infinite' } : {}}
+                  >
+                    <MicIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Typography variant="caption" sx={{ color: recording ? 'error.main' : 'text.secondary' }}>
+                {recording ? t('farmer.ai.recording') : aiLoading ? t('common.processing') : t('farmer.ai.hint')}
+              </Typography>
+            </Box>
+
+            {aiError   ? <Alert severity="warning" onClose={clearAiError}>{aiError}</Alert> : null}
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
-            <TextField label="Product name" name="cropName" value={form.cropName} onChange={handleChange} required />
-            <TextField label="Quantity" name="quantity" type="number" value={form.quantity} onChange={handleChange} required />
+
+            <TextField label={t('farmer.form.productName')}     name="cropName"      value={form.cropName}      onChange={handleChange} required />
+            <TextField label={t('farmer.form.quantity')}        name="quantity"      type="number" value={form.quantity}  onChange={handleChange} required />
             <TextField
-              label="Availability date"
+              label={t('farmer.form.availabilityDate')}
               name="harvestDate"
               type="date"
               value={form.harvestDate}
@@ -172,43 +203,37 @@ function FarmerDashboard() {
               InputLabelProps={{ shrink: true }}
               required
             />
-            <TextField
-              label="Price"
-              name="expectedPrice"
-              type="number"
-              value={form.expectedPrice}
-              onChange={handleChange}
-              required
-            />
+            <TextField label={t('farmer.form.price')} name="expectedPrice" type="number" value={form.expectedPrice} onChange={handleChange} required />
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <Button type="submit" variant="contained" className="primary-button" disabled={loading}>
-                {loading ? 'Saving...' : editingId ? 'Update Harvest' : 'Add Harvest'}
+                {loading ? t('common.saving') : editingId ? t('farmer.form.updateButton') : t('farmer.form.addButton')}
               </Button>
               <Button type="button" variant="outlined" className="ghost-button" onClick={resetForm}>
-                Clear
+                {t('common.clear')}
               </Button>
             </Stack>
           </Stack>
         </SectionCard>
 
-        <SectionCard title="My harvests" subtitle="Only your records are shown here.">
+        <SectionCard title={t('farmer.table.title')} subtitle={t('farmer.table.subtitle')}>
           <MarketplaceTable
-            emptyMessage="No harvest entries yet."
+            emptyMessage={t('farmer.table.empty')}
             rows={harvests}
             columns={[
-              { key: 'cropName', label: 'Product' },
-              { key: 'quantity', label: 'Quantity' },
-              { key: 'expectedPrice', label: 'Price' },
-              { key: 'harvestDate', label: 'Availability' },
-              { key: 'status', label: 'Status', type: 'status' },
+              { key: 'cropName',      label: t('farmer.table.product') },
+              { key: 'quantity',      label: t('farmer.table.quantity') },
+              { key: 'expectedPrice', label: t('farmer.table.price') },
+              { key: 'harvestDate',   label: t('farmer.table.availability') },
+              { key: 'status',        label: t('farmer.table.status'), type: 'status' },
               {
                 key: 'actions',
-                label: 'Actions',
+                label: t('farmer.table.actions'),
                 type: 'actions',
                 actions: (row) => [
-                  { label: 'Edit', onClick: () => handleEdit(row), disabled: row.status !== 'AVAILABLE' },
-                  { label: 'Delete', color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'AVAILABLE' },
-                  { label: 'Request Withdrawal', onClick: () => openWithdrawalModal(row.id), disabled: row.status !== 'RESERVED' },
+                  { label: t('common.edit'),   onClick: () => handleEdit(row),              disabled: row.status !== 'AVAILABLE' },
+                  { label: t('common.delete'), color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'AVAILABLE' },
+                  { label: t('farmer.table.requestWithdrawal'), onClick: () => openWithdrawalModal(row.id), disabled: row.status !== 'RESERVED' },
                 ],
               },
             ]}
@@ -218,26 +243,24 @@ function FarmerDashboard() {
 
       <Dialog open={withdrawalModal.open} onClose={withdrawalModal.saving ? undefined : closeWithdrawalModal} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleWithdrawalSubmit}>
-          <DialogTitle>Request Withdrawal</DialogTitle>
+          <DialogTitle>{t('farmer.withdrawal.title')}</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               <TextField
                 name="reason"
-                label="Reason"
+                label={t('farmer.withdrawal.reason')}
                 value={withdrawalModal.reason}
-                onChange={handleWithdrawalChange}
-                required
-                multiline
-                minRows={3}
-                helperText="This will raise an admin exception for the reserved harvest."
+                onChange={(e) => setWithdrawalModal((cur) => ({ ...cur, reason: e.target.value }))}
+                required multiline minRows={3}
+                helperText={t('farmer.withdrawal.helperText')}
                 fullWidth
               />
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeWithdrawalModal} disabled={withdrawalModal.saving}>Cancel</Button>
+            <Button onClick={closeWithdrawalModal} disabled={withdrawalModal.saving}>{t('common.cancel')}</Button>
             <Button type="submit" variant="contained" disabled={withdrawalModal.saving || !withdrawalModal.reason.trim()}>
-              {withdrawalModal.saving ? 'Sending...' : 'Send Request'}
+              {withdrawalModal.saving ? t('farmer.withdrawal.sending') : t('farmer.withdrawal.sendButton')}
             </Button>
           </DialogActions>
         </Box>

@@ -4,53 +4,57 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
-import { useNavigate } from 'react-router-dom';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-
-const roles = [
-  { title: 'Farmers', icon: '🌱' },
-  { title: 'Mediators', icon: '🚚' },
-  { title: 'Retailers', icon: '🛒' }
-  // Admin intentionally omitted from dropdown
-];
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const role = localStorage.getItem('role');
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const handleJoinClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleJoinClose = () => {
-    setAnchorEl(null);
-  };
+  const navigate    = useNavigate();
+  const { t, i18n } = useTranslation();
+  const [anchorEl, setAnchorEl]     = React.useState(null);
+  const [langAnchor, setLangAnchor] = React.useState(null);
+
+  const handleJoinClick  = (e) => setAnchorEl(e.currentTarget);
+  const handleJoinClose  = ()  => setAnchorEl(null);
+  const handleLangClick  = (e) => setLangAnchor(e.currentTarget);
+  const handleLangClose  = ()  => setLangAnchor(null);
+
   const handleJoinRole = (role) => {
     setAnchorEl(null);
-    if (role === 'farmer') navigate('/register-farmer');
+    if (role === 'farmer')   navigate('/register-farmer');
     else if (role === 'mediator') navigate('/register-mediator');
     else if (role === 'retailer') navigate('/register-retailer');
+  };
+
+  const switchLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+    setLangAnchor(null);
   };
 
   return (
     <AppBar position="static" color="inherit" elevation={1} sx={{ mb: 4 }}>
       <Toolbar>
-        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}> 
+        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
           <img src="/logo192.png" alt="AgroConnect Logo" style={{ height: 40, marginRight: 12 }} />
           <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-            AgroConnect
+            {t('common.appName')}
           </Typography>
         </Box>
-        <Button color="primary" onClick={() => navigate('/login')}>Login</Button>
-        <Button color="success" variant="contained" sx={{ ml: 2 }} onClick={() => navigate('/dashboard')}>Get Started</Button>
-        <Button color="secondary" variant="outlined" sx={{ ml: 2 }}
-          aria-controls="join-menu"
-          aria-haspopup="true"
-          onClick={handleJoinClick}
-        >
-          Join
+
+        <Button color="primary" onClick={() => navigate('/login')}>{t('common.login')}</Button>
+        <Button color="success" variant="contained" sx={{ ml: 2 }} onClick={() => navigate('/dashboard')}>{t('common.getStarted')}</Button>
+        <Button color="secondary" variant="outlined" sx={{ ml: 2 }} onClick={handleJoinClick}>{t('common.join')}</Button>
+
+        {/* Language switcher */}
+        <Button sx={{ ml: 2, minWidth: 40 }} onClick={handleLangClick}>
+          {i18n.language === 'hi' ? 'हिं' : 'EN'}
         </Button>
-        {/* Admin Login button removed for localhost */}
+        <Menu anchorEl={langAnchor} open={Boolean(langAnchor)} onClose={handleLangClose}>
+          <MenuItem onClick={() => switchLanguage('en')}>English</MenuItem>
+          <MenuItem onClick={() => switchLanguage('hi')}>हिंदी</MenuItem>
+        </Menu>
+
         <Menu
           id="join-menu"
           anchorEl={anchorEl}
@@ -59,9 +63,9 @@ const Navbar = () => {
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
-          <MenuItem onClick={() => handleJoinRole('farmer')}>🌱 Join as Farmer</MenuItem>
-          <MenuItem onClick={() => handleJoinRole('mediator')}>🚚 Join as Mediator</MenuItem>
-          <MenuItem onClick={() => handleJoinRole('retailer')}>🛒 Join as Retailer</MenuItem>
+          <MenuItem onClick={() => handleJoinRole('farmer')}>🌱 {t('common.joinFarmer')}</MenuItem>
+          <MenuItem onClick={() => handleJoinRole('mediator')}>🚚 {t('common.joinMediator')}</MenuItem>
+          <MenuItem onClick={() => handleJoinRole('retailer')}>🛒 {t('common.joinRetailer')}</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
