@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, Dialog, DialogActions,
-  DialogContent, DialogTitle, Stack, TextField,
+  DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField,
 } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
@@ -10,6 +12,8 @@ import MarketplaceTable from '../components/MarketplaceTable';
 import SectionCard from '../components/SectionCard';
 import { getSession } from '../utils/session';
 import HINDI_CROP_NAMES from '../utils/hindiCropNames';
+import useSpeechInput from '../utils/useSpeechInput';
+import CropConfirmDialog from '../components/CropConfirmDialog';
 
 const emptyHarvest = { cropName: '', quantity: '', harvestDate: '', expectedPrice: '' };
 
@@ -25,6 +29,7 @@ function FarmerDashboard() {
   const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
   const [cropNameHint, setCropNameHint] = useState('');
   const [cropDisplayName, setCropDisplayName] = useState('');
+  const [cropConfirm, setCropConfirm] = useState({ open: false, original: '', suggested: '' });
 
   const fetchHarvests = async () => {
     try {
@@ -58,25 +63,43 @@ function FarmerDashboard() {
 
   const resetForm = () => { setForm(emptyHarvest); setEditingId(null); setCropNameHint(''); setCropDisplayName(''); };
 
-  const handleCropNameBlur = async (e) => {
-    const raw = e.target.value.trim();
+  const applyNormalized = (normalized) => {
+    const isHindi = i18n.language.startsWith('hi');
+    const hindiName = HINDI_CROP_NAMES[normalized];
+    setForm((current) => ({ ...current, cropName: normalized }));
+    setCropDisplayName(isHindi && hindiName ? hindiName : normalized);
+    setCropNameHint('');
+  };
+
+  const normalizeCrop = async (raw) => {
     if (!raw) return;
     try {
       const response = await axiosInstance.get(`/api/crops/normalize?name=${encodeURIComponent(raw)}`);
       const { normalized, corrected, valid } = response.data;
       const isHindi = i18n.language.startsWith('hi');
-      const hindiName = HINDI_CROP_NAMES[normalized];
       if (!valid) {
         setCropNameHint(isHindi ? '⚠ फसल का नाम मान्य नहीं है। कृपया सही फसल का नाम दर्ज करें।' : '⚠ Crop name not recognized. Please enter a valid crop name.');
+      } else if (corrected) {
+        // Show confirmation popup instead of auto-correcting
+        setCropConfirm({ open: true, original: raw, suggested: normalized });
       } else {
-        setForm((current) => ({ ...current, cropName: normalized }));
-        setCropDisplayName(isHindi && hindiName ? hindiName : normalized);
-        setCropNameHint(corrected ? (isHindi && hindiName ? `(${normalized})` : `Corrected to: ${normalized}`) : '');
+        applyNormalized(normalized);
       }
     } catch {
       setCropNameHint('');
     }
   };
+
+  const handleCropNameBlur = (e) => normalizeCrop(e.target.value.trim());
+
+  const { listening, toggle, supported } = useSpeechInput({
+    lang: i18n.language.startsWith('hi') ? 'hi-IN' : 'en-IN',
+    onResult: (spoken) => {
+      setCropDisplayName(spoken);
+      setForm((current) => ({ ...current, cropName: spoken }));
+      normalizeCrop(spoken);
+    },
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -172,7 +195,24 @@ function FarmerDashboard() {
 
             {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
-            <TextField label={t('farmer.form.productName')} name="cropName" value={cropDisplayName} onChange={handleChange} onBlur={handleCropNameBlur} helperText={cropNameHint} required />
+            <TextField
+              label={t('farmer.form.productName')}
+              name="cropName"
+              value={cropDisplayName}
+              onChange={handleChange}
+              onBlur={handleCropNameBlur}
+              helperText={listening ? '🎙 Listening...' : cropNameHint}
+              required
+              InputProps={supported ? {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={toggle} size="small" color={listening ? 'error' : 'default'} title="Speak crop name">
+                      {listening ? <MicOffIcon /> : <MicIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              } : undefined}
+            />
             <TextField label={t('farmer.form.quantity')}        name="quantity"      type="number" value={form.quantity}  onChange={handleChange} required />
             <TextField
               label={t('farmer.form.availabilityDate')}
@@ -220,6 +260,14 @@ function FarmerDashboard() {
           />
         </SectionCard>
       </Box>
+
+      <CropConfirmDialog
+        open={cropConfirm.open}
+        original={cropConfirm.original}
+        suggested={cropConfirm.suggested}
+        onConfirm={() => { applyNormalized(cropConfirm.suggested); setCropConfirm({ open: false, original: '', suggested: '' }); }}
+        onReject={() => setCropConfirm({ open: false, original: '', suggested: '' })}
+      />
 
       <Dialog open={withdrawalModal.open} onClose={withdrawalModal.saving ? undefined : closeWithdrawalModal} fullWidth maxWidth="sm">
         <Box component="form" onSubmit={handleWithdrawalSubmit}>
