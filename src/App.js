@@ -3,10 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
-import AdminRegister from './pages/AdminRegister';
 import AgentDashboard from './pages/AgentDashboard';
 import AgentLogin from './pages/AgentLogin';
-import AgentRegister from './pages/AgentRegister';
 import FarmerDashboard from './pages/FarmerDashboard';
 import FarmerLogin from './pages/FarmerLogin';
 import FarmerRegister from './pages/FarmerRegister';
@@ -75,7 +73,7 @@ function App() {
         />
 
         <Route path="/agent/login" element={<AgentLogin />} />
-        <Route path="/agent/register" element={<AgentRegister />} />
+        <Route path="/agent/register" element={<Navigate to="/" replace />} />
         <Route
           path="/agent/dashboard"
           element={(
@@ -86,7 +84,7 @@ function App() {
         />
 
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/admin/register" element={<Navigate to="/" replace />} />
         <Route
           path="/admin/dashboard"
           element={(
