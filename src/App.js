@@ -11,6 +11,7 @@ import FarmerDashboard from './pages/FarmerDashboard';
 import FarmerLogin from './pages/FarmerLogin';
 import FarmerRegister from './pages/FarmerRegister';
 import HomeModern from './pages/HomeModern';
+import PublicDemandDashboard from './pages/PublicDemandDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import RetailerDashboard from './pages/RetailerDashboard';
@@ -95,6 +96,7 @@ function App() {
           )}
         />
 
+        <Route path="/market" element={<PublicDemandDashboard />} />
         <Route path="/dashboard" element={<SessionRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

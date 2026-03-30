@@ -37,6 +37,12 @@ function HomeModern() {
           </Typography>
         </Box>
 
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Button component={RouterLink} to="/market" variant="outlined" className="ghost-button">
+            View Live Demand Market
+          </Button>
+        </Box>
+
         <Box className="role-grid">
           {roleCards.map((card) => (
             <Box key={card.role} className="role-card">
