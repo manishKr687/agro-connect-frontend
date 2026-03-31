@@ -25,7 +25,7 @@ import {
   subscribeToSessionChanges,
 } from './utils/session';
 
-function PrivateRoute({ children, role, session }) {
+export function PrivateRoute({ children, role, session }) {
   if (!session.userId) {
     return <Navigate to={role ? roleHomePath(role, 'login') : '/'} replace />;
   }
@@ -37,7 +37,7 @@ function PrivateRoute({ children, role, session }) {
   return children;
 }
 
-function SessionRedirect({ session }) {
+export function SessionRedirect({ session }) {
   if (!session.userId || !session.role) {
     clearSession();
     return <Navigate to="/" replace />;
