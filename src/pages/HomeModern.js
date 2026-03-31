@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Link as RouterLink, Navigate } from 'react-router-dom';
 import { Box, Button, Chip, Container, Typography } from '@mui/material';
-import { getSession, ROLE_META, roleHomePath } from '../utils/session';
+import { ROLE_META, roleHomePath } from '../utils/session';
 
 const roles = Object.entries(ROLE_META).map(([key, meta]) => ({
   role: key,
@@ -46,9 +46,7 @@ function NavDropdown({ label, items }) {
   );
 }
 
-function HomeModern() {
-  const session = getSession();
-
+function HomeModern({ session }) {
   if (session.userId && session.role) {
     return <Navigate to={roleHomePath(session.role, 'dashboard')} replace />;
   }

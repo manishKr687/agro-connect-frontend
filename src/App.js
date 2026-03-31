@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 import './App.css';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
@@ -15,11 +16,16 @@ import Register from './pages/Register';
 import RetailerDashboard from './pages/RetailerDashboard';
 import RetailerLogin from './pages/RetailerLogin';
 import RetailerRegister from './pages/RetailerRegister';
-import { clearSession, getSession, roleHomePath } from './utils/session';
+import axiosInstance from './api/axiosConfig';
+import {
+  clearSession,
+  getSession,
+  roleHomePath,
+  saveSession,
+  subscribeToSessionChanges,
+} from './utils/session';
 
-function PrivateRoute({ children, role }) {
-  const session = getSession();
-
+function PrivateRoute({ children, role, session }) {
   if (!session.userId) {
     return <Navigate to={role ? roleHomePath(role, 'login') : '/'} replace />;
   }
@@ -31,9 +37,7 @@ function PrivateRoute({ children, role }) {
   return children;
 }
 
-function SessionRedirect() {
-  const session = getSession();
-
+function SessionRedirect({ session }) {
   if (!session.userId || !session.role) {
     clearSession();
     return <Navigate to="/" replace />;
@@ -43,10 +47,44 @@ function SessionRedirect() {
 }
 
 function App() {
+  const [session, setSession] = React.useState(getSession());
+  const [authReady, setAuthReady] = React.useState(false);
+
+  const syncSession = React.useCallback(() => {
+    setSession(getSession());
+  }, []);
+
+  const bootstrapSession = React.useCallback(async () => {
+    try {
+      const response = await axiosInstance.get('/api/users/me');
+      saveSession(response.data);
+      setSession(getSession());
+    } catch (error) {
+      clearSession();
+      setSession(getSession());
+    } finally {
+      setAuthReady(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    bootstrapSession();
+  }, [bootstrapSession]);
+
+  React.useEffect(() => subscribeToSessionChanges(syncSession), [syncSession]);
+
+  if (!authReady) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeModern />} />
+        <Route path="/" element={<HomeModern session={session} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -55,7 +93,7 @@ function App() {
         <Route
           path="/farmer/dashboard"
           element={(
-            <PrivateRoute role="FARMER">
+            <PrivateRoute role="FARMER" session={session}>
               <FarmerDashboard />
             </PrivateRoute>
           )}
@@ -66,7 +104,7 @@ function App() {
         <Route
           path="/retailer/dashboard"
           element={(
-            <PrivateRoute role="RETAILER">
+            <PrivateRoute role="RETAILER" session={session}>
               <RetailerDashboard />
             </PrivateRoute>
           )}
@@ -77,7 +115,7 @@ function App() {
         <Route
           path="/agent/dashboard"
           element={(
-            <PrivateRoute role="AGENT">
+            <PrivateRoute role="AGENT" session={session}>
               <AgentDashboard />
             </PrivateRoute>
           )}
@@ -88,14 +126,14 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={(
-            <PrivateRoute role="ADMIN">
+            <PrivateRoute role="ADMIN" session={session}>
               <AdminDashboard />
             </PrivateRoute>
           )}
         />
 
         <Route path="/market" element={<PublicDemandDashboard />} />
-        <Route path="/dashboard" element={<SessionRedirect />} />
+        <Route path="/dashboard" element={<SessionRedirect session={session} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

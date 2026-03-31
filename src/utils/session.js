@@ -1,3 +1,9 @@
+const SESSION_EVENT = 'agroconnect-session-changed';
+
+function notifySessionChanged() {
+  window.dispatchEvent(new Event(SESSION_EVENT));
+}
+
 export const ROLE_META = {
   FARMER: {
     label: 'Farmer',
@@ -37,6 +43,7 @@ export function saveSession(authResponse) {
   localStorage.setItem('userId', String(authResponse.userId || ''));
   localStorage.setItem('username', authResponse.username || '');
   localStorage.setItem('role', authResponse.role || '');
+  notifySessionChanged();
 }
 
 export function clearSession() {
@@ -44,6 +51,12 @@ export function clearSession() {
   localStorage.removeItem('username');
   localStorage.removeItem('role');
   localStorage.removeItem('adminId');
+  notifySessionChanged();
+}
+
+export function subscribeToSessionChanges(listener) {
+  window.addEventListener(SESSION_EVENT, listener);
+  return () => window.removeEventListener(SESSION_EVENT, listener);
 }
 
 export function roleHomePath(role, type) {
