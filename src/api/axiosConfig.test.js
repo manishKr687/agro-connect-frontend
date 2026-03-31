@@ -1,5 +1,7 @@
-jest.mock('../utils/session', () => ({
-  clearSession: jest.fn(),
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+vi.mock('../utils/session', () => ({
+  clearSession: vi.fn(),
 }));
 
 import { clearSession } from '../utils/session';
@@ -7,7 +9,7 @@ import { handleAuthFailure } from './axiosConfig';
 
 describe('axios auth failure handling', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('clears session on 401 responses', async () => {

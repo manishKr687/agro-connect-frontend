@@ -1,50 +1,48 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-jest.mock('./pages/AdminDashboard', () => () => null);
-jest.mock('./pages/AdminLogin', () => () => null);
-jest.mock('./pages/AgentDashboard', () => () => null);
-jest.mock('./pages/AgentLogin', () => () => null);
-jest.mock('./pages/FarmerDashboard', () => () => null);
-jest.mock('./pages/FarmerLogin', () => () => null);
-jest.mock('./pages/FarmerRegister', () => () => null);
-jest.mock('./pages/HomeModern', () => () => null);
-jest.mock('./pages/PublicDemandDashboard', () => () => null);
-jest.mock('./pages/Login', () => () => null);
-jest.mock('./pages/Register', () => () => null);
-jest.mock('./pages/RetailerDashboard', () => () => null);
-jest.mock('./pages/RetailerLogin', () => () => null);
-jest.mock('./pages/RetailerRegister', () => () => null);
-jest.mock('./api/axiosConfig', () => ({
+vi.mock('./pages/AdminDashboard', () => ({ default: () => null }));
+vi.mock('./pages/AdminLogin', () => ({ default: () => null }));
+vi.mock('./pages/AgentDashboard', () => ({ default: () => null }));
+vi.mock('./pages/AgentLogin', () => ({ default: () => null }));
+vi.mock('./pages/FarmerDashboard', () => ({ default: () => null }));
+vi.mock('./pages/FarmerLogin', () => ({ default: () => null }));
+vi.mock('./pages/FarmerRegister', () => ({ default: () => null }));
+vi.mock('./pages/HomeModern', () => ({ default: () => null }));
+vi.mock('./pages/PublicDemandDashboard', () => ({ default: () => null }));
+vi.mock('./pages/Login', () => ({ default: () => null }));
+vi.mock('./pages/Register', () => ({ default: () => null }));
+vi.mock('./pages/RetailerDashboard', () => ({ default: () => null }));
+vi.mock('./pages/RetailerLogin', () => ({ default: () => null }));
+vi.mock('./pages/RetailerRegister', () => ({ default: () => null }));
+vi.mock('./api/axiosConfig', () => ({
   __esModule: true,
   default: {
-    get: jest.fn(),
+    get: vi.fn(),
   },
 }));
 
-const mockClearSession = jest.fn();
+const mockClearSession = vi.fn();
 
-jest.mock('./utils/session', () => {
-  const actual = jest.requireActual('./utils/session');
+vi.mock('./utils/session', async () => {
+  const actual = await vi.importActual('./utils/session');
   return {
     ...actual,
     clearSession: (...args) => mockClearSession(...args),
   };
 });
 
-jest.mock('@mui/material', () => ({
+vi.mock('@mui/material', () => ({
   Box: ({ children }) => {
-    const React = require('react');
     return React.createElement('div', null, children);
   },
   CircularProgress: () => {
-    const React = require('react');
     return React.createElement('div', null, 'loading');
   },
 }));
 
-jest.mock('react-router-dom', () => {
-  const React = require('react');
+vi.mock('react-router-dom', () => {
   return {
     BrowserRouter: ({ children }) => React.createElement(React.Fragment, null, children),
     Routes: ({ children }) => React.createElement(React.Fragment, null, children),

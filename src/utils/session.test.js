@@ -1,3 +1,4 @@
+import { describe, expect, test, beforeEach } from 'vitest';
 import { clearSession, getSession, saveSession } from './session';
 
 describe('session utils', () => {
