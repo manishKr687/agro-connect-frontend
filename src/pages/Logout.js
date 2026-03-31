@@ -1,20 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosConfig';
+import { clearSession } from '../utils/session';
 
 const Logout = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('role');
-    localStorage.removeItem('adminId');
-    // Redirect based on role if needed
-    const role = localStorage.getItem('role');
-    if (role === 'ADMIN') {
-      navigate('/admin-login');
-    } else {
-      navigate('/login');
-    }
+    axiosInstance.post('/api/auth/logout')
+      .finally(() => {
+        clearSession();
+        navigate('/');
+      });
   }, [navigate]);
 
   return null;
