@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
+import ChangePasswordDialog from './ChangePasswordDialog';
 import i18n from '../i18n';
 import { clearSession, ROLE_META } from '../utils/session';
 
@@ -24,11 +25,12 @@ function DashboardShell({
   actions = [],
   children,
 }) {
-  const navigate        = useNavigate();
-  const { t }          = useTranslation();
-  const roleMeta        = ROLE_META[role];
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const roleMeta = ROLE_META[role];
   const [langAnchor, setLangAnchor] = React.useState(null);
   const [currentLang, setCurrentLang] = React.useState(i18n.language || 'en');
+  const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
 
   const handleLogout = () => {
     axiosInstance.post('/api/auth/logout')
@@ -59,6 +61,9 @@ function DashboardShell({
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <Button component={RouterLink} to="/" variant="outlined" className="ghost-button">
               {t('common.home')}
+            </Button>
+            <Button variant="outlined" className="ghost-button" onClick={() => setPasswordDialogOpen(true)}>
+              Change Password
             </Button>
             <Button size="small" variant="outlined" onClick={(e) => setLangAnchor(e.currentTarget)}>
               {currentLang === 'hi' ? 'हिं' : 'EN'}
@@ -103,6 +108,15 @@ function DashboardShell({
         <Divider className="section-divider" />
         <Box className="dashboard-content">{children}</Box>
       </Container>
+
+      <ChangePasswordDialog
+        open={passwordDialogOpen}
+        onClose={() => setPasswordDialogOpen(false)}
+        onPasswordChanged={() => {
+          setPasswordDialogOpen(false);
+          navigate(roleMeta?.loginPath || '/');
+        }}
+      />
     </Box>
   );
 }
