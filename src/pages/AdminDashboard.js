@@ -237,9 +237,11 @@ function AdminDashboard() {
       endpoint: `/api/admins/${session.userId}/users`,
       method: 'post',
       successMessage: 'User created.',
-      values: { username: '', role: '', password: '' },
+      values: { username: '', role: '', password: '', email: '', phoneNumber: '' },
       fields: [
         { name: 'username', label: 'Username', required: true },
+        { name: 'email', label: 'Email' },
+        { name: 'phoneNumber', label: 'Mobile Number', helperText: 'Use digits with optional + country code.' },
         {
           name: 'role',
           label: 'Role',
@@ -261,9 +263,13 @@ function AdminDashboard() {
         username: user.username || '',
         role: user.role || '',
         password: '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
       },
       fields: [
         { name: 'username', label: 'Username', required: true },
+        { name: 'email', label: 'Email' },
+        { name: 'phoneNumber', label: 'Mobile Number', helperText: 'Use digits with optional + country code.' },
         {
           name: 'role',
           label: 'Role',
@@ -658,6 +664,8 @@ function AdminDashboard() {
               columns={[
                 { key: 'id', label: 'ID' },
                 { key: 'username', label: 'Username' },
+                { key: 'email', label: 'Email' },
+                { key: 'phoneNumber', label: 'Mobile' },
                 { key: 'role', label: 'Role', type: 'status' },
                 {
                   key: 'actions',

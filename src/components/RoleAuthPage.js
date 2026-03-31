@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -24,7 +24,13 @@ function RoleAuthPage({ mode, role }) {
   const navigate = useNavigate();
   const roleMeta = ROLE_META[role];
   const isLogin = mode === 'login';
-  const [form, setForm] = useState({ username: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    email: '',
+    phoneNumber: '',
+  });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,6 +56,11 @@ function RoleAuthPage({ mode, role }) {
       return;
     }
 
+    if (!isLogin && !form.email.trim() && !form.phoneNumber.trim()) {
+      setStatus({ type: 'error', message: 'Add at least an email or a phone number for account recovery.' });
+      return;
+    }
+
     if (!isLogin && form.password !== form.confirmPassword) {
       setStatus({ type: 'error', message: 'Passwords do not match.' });
       return;
@@ -67,6 +78,8 @@ function RoleAuthPage({ mode, role }) {
             username: form.username.trim(),
             password: form.password,
             role,
+            email: form.email.trim() || null,
+            phoneNumber: form.phoneNumber.trim() || null,
           };
 
       const response = await axiosInstance.post(
@@ -133,28 +146,60 @@ function RoleAuthPage({ mode, role }) {
           required
         />
 
-        {!isLogin ? (
-          <TextField
-            label="Confirm Password"
-            type="password"
-            name="confirmPassword"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            fullWidth
-            required
-          />
+        {isLogin ? (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -1 }}>
+            <Button
+              component={RouterLink}
+              to={`/forgot-password?role=${role}`}
+              variant="text"
+              size="small"
+              className="link-button"
+            >
+              Forgot password?
+            </Button>
+          </Box>
         ) : null}
 
         {!isLogin ? (
-          <TextField
-            label="Assigned Role"
-            value={roleMeta.label}
-            select
-            fullWidth
-            disabled
-          >
-            <MenuItem value={roleMeta.label}>{roleMeta.label}</MenuItem>
-          </TextField>
+          <>
+            <TextField
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+
+            <TextField
+              label="Email"
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              fullWidth
+            />
+
+            <TextField
+              label="Mobile Number"
+              name="phoneNumber"
+              value={form.phoneNumber}
+              onChange={handleChange}
+              fullWidth
+              helperText="Use digits with optional + country code."
+            />
+
+            <TextField
+              label="Assigned Role"
+              value={roleMeta.label}
+              select
+              fullWidth
+              disabled
+            >
+              <MenuItem value={roleMeta.label}>{roleMeta.label}</MenuItem>
+            </TextField>
+          </>
         ) : null}
 
         <Button type="submit" variant="contained" className="primary-button" disabled={isSubmitting}>
