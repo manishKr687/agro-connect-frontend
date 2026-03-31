@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import axiosInstance from '../api/axiosConfig';
 import i18n from '../i18n';
 import { clearSession, ROLE_META } from '../utils/session';
 
@@ -30,8 +31,11 @@ function DashboardShell({
   const [currentLang, setCurrentLang] = React.useState(i18n.language || 'en');
 
   const handleLogout = () => {
-    clearSession();
-    navigate(roleMeta?.loginPath || '/');
+    axiosInstance.post('/api/auth/logout')
+      .finally(() => {
+        clearSession();
+        navigate(roleMeta?.loginPath || '/');
+      });
   };
 
   const switchLanguage = (lang) => {

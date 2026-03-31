@@ -20,7 +20,7 @@ import { clearSession, getSession, roleHomePath } from './utils/session';
 function PrivateRoute({ children, role }) {
   const session = getSession();
 
-  if (!session.token || !session.userId) {
+  if (!session.userId) {
     return <Navigate to={role ? roleHomePath(role, 'login') : '/'} replace />;
   }
 
@@ -34,7 +34,7 @@ function PrivateRoute({ children, role }) {
 function SessionRedirect() {
   const session = getSession();
 
-  if (!session.token || !session.role) {
+  if (!session.userId || !session.role) {
     clearSession();
     return <Navigate to="/" replace />;
   }

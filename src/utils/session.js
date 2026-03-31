@@ -27,7 +27,6 @@ export const ROLE_META = {
 
 export function getSession() {
   return {
-    token: localStorage.getItem('jwt') || '',
     userId: localStorage.getItem('userId') || '',
     username: localStorage.getItem('username') || '',
     role: localStorage.getItem('role') || '',
@@ -35,14 +34,12 @@ export function getSession() {
 }
 
 export function saveSession(authResponse) {
-  localStorage.setItem('jwt', authResponse.token || '');
   localStorage.setItem('userId', String(authResponse.userId || ''));
   localStorage.setItem('username', authResponse.username || '');
   localStorage.setItem('role', authResponse.role || '');
 }
 
 export function clearSession() {
-  localStorage.removeItem('jwt');
   localStorage.removeItem('userId');
   localStorage.removeItem('username');
   localStorage.removeItem('role');

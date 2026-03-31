@@ -1,12 +1,16 @@
+import axiosInstance from '../api/axiosConfig';
 import { AppBar, Toolbar, Typography, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { clearSession } from '../utils/session';
 
 const DashboardNav = ({ title }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    localStorage.removeItem('role');
-    navigate('/login');
+    axiosInstance.post('/api/auth/logout')
+      .finally(() => {
+        clearSession();
+        navigate('/login');
+      });
   };
   return (
     <AppBar position="static" color="default" elevation={1} sx={{ mb: 3 }}>

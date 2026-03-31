@@ -49,7 +49,7 @@ function NavDropdown({ label, items }) {
 function HomeModern() {
   const session = getSession();
 
-  if (session.token && session.role) {
+  if (session.userId && session.role) {
     return <Navigate to={roleHomePath(session.role, 'dashboard')} replace />;
   }
 
