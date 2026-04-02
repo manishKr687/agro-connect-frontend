@@ -30,16 +30,19 @@ function DashboardShell({
   const { t } = useTranslation();
   const roleMeta = ROLE_META[role];
   const [langAnchor, setLangAnchor] = React.useState(null);
+  const [accountAnchor, setAccountAnchor] = React.useState(null);
   const [currentLang, setCurrentLang] = React.useState(i18n.language || 'en');
   const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = React.useState(false);
   const [displayName, setDisplayName] = React.useState(title);
 
+  const loginPath = role === 'ADMIN' ? '/admin/login' : '/login';
+
   const handleLogout = () => {
     axiosInstance.post('/api/auth/logout')
       .finally(() => {
         clearSession();
-        navigate(roleMeta?.loginPath || '/');
+        navigate(loginPath);
       });
   };
 
@@ -49,6 +52,8 @@ function DashboardShell({
     setLangAnchor(null);
   };
 
+  const closeAccountMenu = () => setAccountAnchor(null);
+
   return (
     <Box className="app-shell">
       <Container maxWidth="xl">
@@ -56,31 +61,38 @@ function DashboardShell({
           <Box>
             <Chip label={roleMeta?.label || role} className="soft-chip" />
             <Typography variant="h3" className="dashboard-title">
-              {title}
+              {displayName}
             </Typography>
             <Typography className="dashboard-copy">{subtitle}</Typography>
           </Box>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
             <Button component={RouterLink} to="/" variant="outlined" className="ghost-button">
               {t('common.home')}
             </Button>
-            <Button variant="outlined" className="ghost-button" onClick={() => setProfileDialogOpen(true)}>
-              Update Profile
-            </Button>
-            <Button variant="outlined" className="ghost-button" onClick={() => setPasswordDialogOpen(true)}>
-              Change Password
-            </Button>
-            <Button size="small" variant="outlined" onClick={(e) => setLangAnchor(e.currentTarget)}>
+
+            <Button size="small" variant="outlined" className="ghost-button" onClick={(e) => setLangAnchor(e.currentTarget)}>
               {currentLang === 'hi' ? 'हिं' : 'EN'}
             </Button>
             <Menu anchorEl={langAnchor} open={Boolean(langAnchor)} onClose={() => setLangAnchor(null)}>
               <MenuItem onClick={() => switchLanguage('en')}>English</MenuItem>
               <MenuItem onClick={() => switchLanguage('hi')}>हिंदी</MenuItem>
             </Menu>
-            <Button variant="contained" className="primary-button" onClick={handleLogout}>
-              {t('common.logout')}
+
+            <Button variant="contained" className="primary-button" onClick={(e) => setAccountAnchor(e.currentTarget)}>
+              Account ▾
             </Button>
+            <Menu anchorEl={accountAnchor} open={Boolean(accountAnchor)} onClose={closeAccountMenu}>
+              <MenuItem onClick={() => { closeAccountMenu(); setProfileDialogOpen(true); }}>
+                Update Profile
+              </MenuItem>
+              <MenuItem onClick={() => { closeAccountMenu(); setPasswordDialogOpen(true); }}>
+                Change Password
+              </MenuItem>
+              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                {t('common.logout')}
+              </MenuItem>
+            </Menu>
           </Stack>
         </Box>
 
@@ -129,7 +141,7 @@ function DashboardShell({
         onClose={() => setPasswordDialogOpen(false)}
         onPasswordChanged={() => {
           setPasswordDialogOpen(false);
-          navigate(roleMeta?.loginPath || '/');
+          navigate(loginPath);
         }}
       />
     </Box>
