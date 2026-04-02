@@ -1,58 +1,11 @@
-import React, { useRef, useState } from 'react';
 import { Link as RouterLink, Navigate } from 'react-router-dom';
 import { Box, Button, Chip, Container, Typography } from '@mui/material';
-import { ROLE_META, roleHomePath } from '../utils/session';
-
-const roles = Object.entries(ROLE_META).map(([key, meta]) => ({
-  role: key,
-  label: meta.label,
-  loginPath: meta.loginPath,
-  registerPath: meta.registerPath,
-}));
-
-function NavDropdown({ label, items }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  // Close on outside click
-  React.useEffect(() => {
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  return (
-    <Box ref={ref} className="nav-dropdown">
-      <button className="nav-dropdown__trigger" onClick={() => setOpen((v) => !v)}>
-        {label} <span className="nav-dropdown__arrow">{open ? '▲' : '▼'}</span>
-      </button>
-      {open && (
-        <Box className="nav-dropdown__menu">
-          {items.map((item) => (
-            <RouterLink
-              key={item.to}
-              to={item.to}
-              className="nav-dropdown__item"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </RouterLink>
-          ))}
-        </Box>
-      )}
-    </Box>
-  );
-}
+import { roleHomePath } from '../utils/session';
 
 function HomeModern({ session }) {
   if (session.userId && session.role) {
     return <Navigate to={roleHomePath(session.role, 'dashboard')} replace />;
   }
-
-  const signInItems = roles.filter((r) => r.role !== 'ADMIN' && r.role !== 'AGENT').map((r) => ({ to: r.loginPath, label: r.label }));
-  const registerItems = roles.filter((r) => r.role !== 'ADMIN' && r.role !== 'AGENT').map((r) => ({ to: r.registerPath, label: r.label }));
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -64,8 +17,12 @@ function HomeModern({ session }) {
             <Button component={RouterLink} to="/market" variant="text" className="nav-text-btn">
               Live Market
             </Button>
-            <NavDropdown label="Sign In" items={signInItems} />
-            <NavDropdown label="Register" items={registerItems} />
+            <Button component={RouterLink} to="/login" variant="outlined" className="ghost-button">
+              Sign In
+            </Button>
+            <Button component={RouterLink} to="/register" variant="contained" className="primary-button">
+              Register
+            </Button>
           </Box>
         </Container>
       </Box>
