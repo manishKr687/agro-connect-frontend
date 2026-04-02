@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import ChangePasswordDialog from './ChangePasswordDialog';
+import UpdateProfileDialog from './UpdateProfileDialog';
 import i18n from '../i18n';
 import { clearSession, ROLE_META } from '../utils/session';
 
@@ -31,6 +32,8 @@ function DashboardShell({
   const [langAnchor, setLangAnchor] = React.useState(null);
   const [currentLang, setCurrentLang] = React.useState(i18n.language || 'en');
   const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = React.useState(false);
+  const [displayName, setDisplayName] = React.useState(title);
 
   const handleLogout = () => {
     axiosInstance.post('/api/auth/logout')
@@ -61,6 +64,9 @@ function DashboardShell({
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <Button component={RouterLink} to="/" variant="outlined" className="ghost-button">
               {t('common.home')}
+            </Button>
+            <Button variant="outlined" className="ghost-button" onClick={() => setProfileDialogOpen(true)}>
+              Update Profile
             </Button>
             <Button variant="outlined" className="ghost-button" onClick={() => setPasswordDialogOpen(true)}>
               Change Password
@@ -108,6 +114,15 @@ function DashboardShell({
         <Divider className="section-divider" />
         <Box className="dashboard-content">{children}</Box>
       </Container>
+
+      <UpdateProfileDialog
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+        onProfileUpdated={(newName) => {
+          setDisplayName(newName);
+          setProfileDialogOpen(false);
+        }}
+      />
 
       <ChangePasswordDialog
         open={passwordDialogOpen}
