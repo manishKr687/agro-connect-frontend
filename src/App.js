@@ -5,19 +5,14 @@ import './App.css';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AgentDashboard from './pages/AgentDashboard';
-import AgentLogin from './pages/AgentLogin';
 import FarmerDashboard from './pages/FarmerDashboard';
-import FarmerLogin from './pages/FarmerLogin';
-import FarmerRegister from './pages/FarmerRegister';
 import ForgotPassword from './pages/ForgotPassword';
 import HomeModern from './pages/HomeModern';
-import PublicDemandDashboard from './pages/PublicDemandDashboard';
 import Login from './pages/Login';
+import PublicDemandDashboard from './pages/PublicDemandDashboard';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import RetailerDashboard from './pages/RetailerDashboard';
-import RetailerLogin from './pages/RetailerLogin';
-import RetailerRegister from './pages/RetailerRegister';
 import axiosInstance from './api/axiosConfig';
 import {
   clearSession,
@@ -29,7 +24,7 @@ import {
 
 export function PrivateRoute({ children, role, session }) {
   if (!session.userId) {
-    return <Navigate to={role ? roleHomePath(role, 'login') : '/'} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (role && session.role !== role) {
@@ -92,8 +87,13 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        <Route path="/farmer/login" element={<FarmerLogin />} />
-        <Route path="/farmer/register" element={<FarmerRegister />} />
+        {/* Legacy role-specific routes — redirect to unified pages */}
+        <Route path="/farmer/login" element={<Navigate to="/login" replace />} />
+        <Route path="/farmer/register" element={<Navigate to="/register" replace />} />
+        <Route path="/retailer/login" element={<Navigate to="/login" replace />} />
+        <Route path="/retailer/register" element={<Navigate to="/register" replace />} />
+        <Route path="/agent/login" element={<Navigate to="/login" replace />} />
+
         <Route
           path="/farmer/dashboard"
           element={(
@@ -103,8 +103,6 @@ function App() {
           )}
         />
 
-        <Route path="/retailer/login" element={<RetailerLogin />} />
-        <Route path="/retailer/register" element={<RetailerRegister />} />
         <Route
           path="/retailer/dashboard"
           element={(
@@ -114,8 +112,6 @@ function App() {
           )}
         />
 
-        <Route path="/agent/login" element={<AgentLogin />} />
-        <Route path="/agent/register" element={<Navigate to="/" replace />} />
         <Route
           path="/agent/dashboard"
           element={(
@@ -126,7 +122,6 @@ function App() {
         />
 
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/register" element={<Navigate to="/" replace />} />
         <Route
           path="/admin/dashboard"
           element={(
