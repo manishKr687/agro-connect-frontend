@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
@@ -27,9 +27,9 @@ function AgentDashboard() {
   }, []);
 
   const stats = useMemo(() => [
-    { label: t('agent.stats.assigned'),  value: tasks.length,                                                     note: t('agent.stats.assignedNote') },
-    { label: t('agent.stats.inTransit'), value: tasks.filter((item) => item.status === 'IN_TRANSIT').length,      note: t('agent.stats.inTransitNote') },
-    { label: t('agent.stats.delivered'), value: tasks.filter((item) => item.status === 'DELIVERED').length,       note: t('agent.stats.deliveredNote') },
+    { label: t('agent.stats.assigned'),  value: tasks.filter((item) => item.status === 'ASSIGNED').length,   note: t('agent.stats.assignedNote') },
+    { label: t('agent.stats.inTransit'), value: tasks.filter((item) => item.status === 'IN_TRANSIT').length, note: t('agent.stats.inTransitNote') },
+    { label: t('agent.stats.delivered'), value: tasks.filter((item) => item.status === 'DELIVERED').length,  note: t('agent.stats.deliveredNote') },
   ], [tasks, t, i18n.language]);
 
   const performTaskAction = async (taskId, action, body = null, successKey = 'agent.success.accepted') => {
@@ -46,13 +46,13 @@ function AgentDashboard() {
     <DashboardShell
       role="AGENT"
       title={t('agent.dashboardTitle')}
-      subtitle={t('agent.dashboardSubtitle', { username: session.username })}
+      subtitle={t('agent.dashboardSubtitle', { name: session.name })}
       stats={stats}
     >
       <SectionCard title={t('agent.section.title')} subtitle={t('agent.section.subtitle')}>
         {status.message ? <Alert severity={status.type || 'info'} sx={{ mb: 2 }}>{status.message}</Alert> : null}
 
-        <Box className="task-grid">
+        <Stack spacing={2}>
           {tasks.length === 0 ? (
             <Box className="empty-state">{t('agent.empty')}</Box>
           ) : (
@@ -61,61 +61,105 @@ function AgentDashboard() {
                 <Box className="task-card__header">
                   <div>
                     <strong>Task #{task.id}</strong>
-                    <div className="task-card__status">{task.status}</div>
+                    <div className="task-card__status">{task.status.replace(/_/g, ' ')}</div>
                   </div>
                 </Box>
 
                 <div className="task-card__meta">
-                  <div><strong>{t('agent.task.harvest')}:</strong> {task.harvest?.cropName} | {task.harvest?.quantity} units | Price {task.harvest?.expectedPrice}</div>
-                  <div><strong>{t('agent.task.farmer')}:</strong> {task.harvest?.farmer?.username || '—'}</div>
-                  <div><strong>{t('agent.task.retailer')}:</strong> {task.demand?.retailer?.username || '—'}</div>
-                  <div><strong>{t('agent.task.demand')}:</strong> {task.demand?.cropName} | {task.demand?.quantity} units | {t('agent.task.needBy')} {task.demand?.requiredDate}</div>
+                  <div>
+                    <strong>{t('agent.task.harvest')}:</strong>{' '}
+                    {task.harvest?.cropName} · {task.harvest?.quantity} units · ₹{task.harvest?.expectedPrice}
+                  </div>
+                  <div>
+                    <strong>{t('agent.task.farmer')}:</strong>{' '}
+                    {task.harvest?.farmer?.name || '—'}
+                  </div>
+                  <div>
+                    <strong>{t('agent.task.demand')}:</strong>{' '}
+                    {task.demand?.cropName} · {task.demand?.quantity} units · {t('agent.task.needBy')} {task.demand?.requiredDate}
+                  </div>
+                  <div>
+                    <strong>{t('agent.task.retailer')}:</strong>{' '}
+                    {task.demand?.retailer?.name || '—'}
+                  </div>
                 </div>
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} className="task-card__actions">
+                <Box className="task-card__actions">
                   {task.status === 'ASSIGNED' ? (
-                    <>
-                      <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'accept', null, 'agent.success.accepted')}>
-                        {t('agent.action.accept')}
-                      </Button>
+                    <Stack spacing={1.5}>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+                        <Button
+                          variant="contained"
+                          className="primary-button"
+                          onClick={() => performTaskAction(task.id, 'accept', null, 'agent.success.accepted')}
+                        >
+                          {t('agent.action.accept')}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => performTaskAction(task.id, 'reject', { reason: rejectionReason[task.id] || 'Unavailable' }, 'agent.success.rejected')}
+                        >
+                          {t('agent.action.reject')}
+                        </Button>
+                      </Stack>
                       <TextField
                         label={t('agent.action.rejectReason')}
                         size="small"
+                        fullWidth
                         value={rejectionReason[task.id] || ''}
-                        onChange={(event) => setRejectionReason((current) => ({ ...current, [task.id]: event.target.value }))}
+                        onChange={(e) => setRejectionReason((curr) => ({ ...curr, [task.id]: e.target.value }))}
+                        helperText="Optional — leave blank to use default reason."
                       />
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => performTaskAction(task.id, 'reject', { reason: rejectionReason[task.id] || 'Unavailable' }, 'agent.success.rejected')}
-                      >
-                        {t('agent.action.reject')}
-                      </Button>
-                    </>
+                    </Stack>
                   ) : null}
 
                   {task.status === 'ACCEPTED' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'pickup', null, 'agent.success.pickedUp')}>
+                    <Button
+                      variant="contained"
+                      className="primary-button"
+                      onClick={() => performTaskAction(task.id, 'pickup', null, 'agent.success.pickedUp')}
+                    >
                       {t('agent.action.pickedUp')}
                     </Button>
                   ) : null}
 
                   {task.status === 'PICKED_UP' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'in-transit', null, 'agent.success.inTransit')}>
+                    <Button
+                      variant="contained"
+                      className="primary-button"
+                      onClick={() => performTaskAction(task.id, 'in-transit', null, 'agent.success.inTransit')}
+                    >
                       {t('agent.action.inTransit')}
                     </Button>
                   ) : null}
 
                   {task.status === 'IN_TRANSIT' ? (
-                    <Button variant="contained" className="primary-button" onClick={() => performTaskAction(task.id, 'deliver', null, 'agent.success.delivered')}>
+                    <Button
+                      variant="contained"
+                      className="primary-button"
+                      onClick={() => performTaskAction(task.id, 'deliver', null, 'agent.success.delivered')}
+                    >
                       {t('agent.action.delivered')}
                     </Button>
                   ) : null}
-                </Stack>
+
+                  {task.status === 'DELIVERED' ? (
+                    <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 700 }}>
+                      ✓ Delivered
+                    </Typography>
+                  ) : null}
+
+                  {task.status === 'REJECTED' ? (
+                    <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 700 }}>
+                      ✗ Rejected
+                    </Typography>
+                  ) : null}
+                </Box>
               </Box>
             ))
           )}
-        </Box>
+        </Stack>
       </SectionCard>
     </DashboardShell>
   );
