@@ -25,11 +25,11 @@ function RoleAuthPage({ mode, role }) {
   const roleMeta = ROLE_META[role];
   const isLogin = mode === 'login';
   const [form, setForm] = useState({
-    username: '',
+    name: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
     email: '',
-    phoneNumber: '',
   });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,13 +51,13 @@ function RoleAuthPage({ mode, role }) {
     event.preventDefault();
     setStatus({ type: '', message: '' });
 
-    if (!form.username.trim() || !form.password.trim()) {
-      setStatus({ type: 'error', message: 'Username and password are required.' });
+    if (!form.phoneNumber.trim() || !form.password.trim()) {
+      setStatus({ type: 'error', message: 'Phone number and password are required.' });
       return;
     }
 
-    if (!isLogin && !form.email.trim() && !form.phoneNumber.trim()) {
-      setStatus({ type: 'error', message: 'Add at least an email or a phone number for account recovery.' });
+    if (!isLogin && !form.name.trim()) {
+      setStatus({ type: 'error', message: 'Name is required.' });
       return;
     }
 
@@ -71,15 +71,15 @@ function RoleAuthPage({ mode, role }) {
     try {
       const payload = isLogin
         ? {
-            username: form.username.trim(),
+            phoneNumber: form.phoneNumber.trim(),
             password: form.password,
           }
         : {
-            username: form.username.trim(),
+            name: form.name.trim(),
+            phoneNumber: form.phoneNumber.trim(),
             password: form.password,
             role,
             email: form.email.trim() || null,
-            phoneNumber: form.phoneNumber.trim() || null,
           };
 
       const response = await axiosInstance.post(
@@ -128,12 +128,13 @@ function RoleAuthPage({ mode, role }) {
         {status.message ? <Alert severity={status.type || 'info'}>{status.message}</Alert> : null}
 
         <TextField
-          label="Username"
-          name="username"
-          value={form.username}
+          label="Mobile Number"
+          name="phoneNumber"
+          value={form.phoneNumber}
           onChange={handleChange}
           fullWidth
           required
+          helperText="Use digits with optional + country code."
         />
 
         <TextField
@@ -163,6 +164,15 @@ function RoleAuthPage({ mode, role }) {
         {!isLogin ? (
           <>
             <TextField
+              label="Full Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+
+            <TextField
               label="Confirm Password"
               type="password"
               name="confirmPassword"
@@ -179,15 +189,7 @@ function RoleAuthPage({ mode, role }) {
               value={form.email}
               onChange={handleChange}
               fullWidth
-            />
-
-            <TextField
-              label="Mobile Number"
-              name="phoneNumber"
-              value={form.phoneNumber}
-              onChange={handleChange}
-              fullWidth
-              helperText="Use digits with optional + country code."
+              helperText="Optional. Used for password recovery."
             />
 
             <TextField
