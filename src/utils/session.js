@@ -34,21 +34,21 @@ export const ROLE_META = {
 export function getSession() {
   return {
     userId: localStorage.getItem('userId') || '',
-    username: localStorage.getItem('username') || '',
+    name: localStorage.getItem('name') || '',
     role: localStorage.getItem('role') || '',
   };
 }
 
 export function saveSession(authResponse) {
   localStorage.setItem('userId', String(authResponse.userId || ''));
-  localStorage.setItem('username', authResponse.username || '');
+  localStorage.setItem('name', authResponse.name || '');
   localStorage.setItem('role', authResponse.role || '');
   notifySessionChanged();
 }
 
 export function clearSession() {
   localStorage.removeItem('userId');
-  localStorage.removeItem('username');
+  localStorage.removeItem('name');
   localStorage.removeItem('role');
   localStorage.removeItem('adminId');
   notifySessionChanged();
