@@ -151,30 +151,11 @@ a {
   margin-bottom: 26px;
 }
 
-.role-grid,
 .stats-grid,
 .dashboard-grid,
 .task-grid {
   display: grid;
   gap: 20px;
-}
-
-.role-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.role-card {
-  border-radius: 26px;
-  padding: 28px;
-}
-
-.role-card__title {
-  font-weight: 700 !important;
-  margin-bottom: 10px !important;
-}
-
-.role-card__copy {
-  margin-bottom: 18px !important;
 }
 
 .dashboard-header {
@@ -418,61 +399,3 @@ a {
   background: transparent !important;
 }
 
-/* ── Dropdown ──────────────────────────────────────────────────────────────── */
-
-.nav-dropdown {
-  position: relative;
-}
-
-.nav-dropdown__trigger {
-  background: none;
-  border: 1px solid rgba(47, 106, 79, 0.28);
-  border-radius: 999px;
-  padding: 8px 18px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.15s;
-}
-
-.nav-dropdown__trigger:hover {
-  background: rgba(47, 106, 79, 0.07);
-}
-
-.nav-dropdown__arrow {
-  font-size: 0.6rem;
-  opacity: 0.7;
-}
-
-.nav-dropdown__menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 160px;
-  background: var(--surface-strong);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.nav-dropdown__item {
-  padding: 11px 20px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-  transition: background 0.12s;
-}
-
-.nav-dropdown__item:hover {
-  background: rgba(47, 106, 79, 0.07);
-  color: var(--primary);
-}
