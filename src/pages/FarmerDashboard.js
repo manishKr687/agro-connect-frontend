@@ -183,7 +183,7 @@ function FarmerDashboard() {
     <DashboardShell
       role="FARMER"
       title={t('farmer.dashboardTitle')}
-      subtitle={t('farmer.dashboardSubtitle', { username: session.username })}
+      subtitle={t('farmer.dashboardSubtitle', { name: session.name })}
       stats={stats}
     >
       <Box className="dashboard-grid">

@@ -191,7 +191,7 @@ function RetailerDashboard() {
     <DashboardShell
       role="RETAILER"
       title={t('retailer.dashboardTitle')}
-      subtitle={t('retailer.dashboardSubtitle', { username: session.username })}
+      subtitle={t('retailer.dashboardSubtitle', { name: session.name })}
       stats={stats}
     >
       <Box className="dashboard-grid">
