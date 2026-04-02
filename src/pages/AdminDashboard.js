@@ -109,7 +109,7 @@ function AdminDashboard() {
 
       return {
         id: agent.id,
-        username: agent.username,
+        name: agent.name,
         totalAssigned: assignedTasks.length,
         activeTasks: activeAgentTasks.length,
         completedTasks: completedAgentTasks.length,
@@ -237,11 +237,11 @@ function AdminDashboard() {
       endpoint: `/api/admins/${session.userId}/users`,
       method: 'post',
       successMessage: 'User created.',
-      values: { username: '', role: '', password: '', email: '', phoneNumber: '' },
+      values: { name: '', role: '', password: '', email: '', phoneNumber: '' },
       fields: [
-        { name: 'username', label: 'Username', required: true },
+        { name: 'name', label: 'Full Name', required: true },
+        { name: 'phoneNumber', label: 'Mobile Number', required: true, helperText: 'Use digits with optional + country code.' },
         { name: 'email', label: 'Email' },
-        { name: 'phoneNumber', label: 'Mobile Number', helperText: 'Use digits with optional + country code.' },
         {
           name: 'role',
           label: 'Role',
@@ -260,16 +260,16 @@ function AdminDashboard() {
       endpoint: `/api/admins/${session.userId}/users/${user.id}`,
       successMessage: 'User updated.',
       values: {
-        username: user.username || '',
+        name: user.name || '',
         role: user.role || '',
         password: '',
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
       },
       fields: [
-        { name: 'username', label: 'Username', required: true },
+        { name: 'name', label: 'Full Name', required: true },
+        { name: 'phoneNumber', label: 'Mobile Number', required: true, helperText: 'Use digits with optional + country code.' },
         { name: 'email', label: 'Email' },
-        { name: 'phoneNumber', label: 'Mobile Number', helperText: 'Use digits with optional + country code.' },
         {
           name: 'role',
           label: 'Role',
@@ -311,7 +311,7 @@ function AdminDashboard() {
           select: true,
           options: agentUsers.map((agent) => ({
             value: String(agent.id),
-            label: `#${agent.id} ${agent.username}`,
+            label: `#${agent.id} ${agent.name}`,
           })),
           parse: (value) => Number(value),
         },
@@ -405,7 +405,7 @@ function AdminDashboard() {
     <DashboardShell
       role="ADMIN"
       title="Admin Dashboard"
-      subtitle={`Logged in as ${session.username}. Run matching, monitor deliveries, and manage platform access from one operations workspace.`}
+      subtitle={`Logged in as ${session.name}. Run matching, monitor deliveries, and manage platform access from one operations workspace.`}
       stats={stats}
     >
       {status.message ? <Alert severity={status.type || 'info'} sx={{ mb: 2 }}>{status.message}</Alert> : null}
@@ -433,7 +433,7 @@ function AdminDashboard() {
             <Box className="empty-state" sx={{ mb: 2 }}>
               <Typography>
                 {recommendedAgent
-                  ? `Current recommended agent for the next approved match: #${recommendedAgent.id} ${recommendedAgent.username} (${recommendedAgent.activeTasks} active tasks)`
+                  ? `Current recommended agent for the next approved match: #${recommendedAgent.id} ${recommendedAgent.name} (${recommendedAgent.activeTasks} active tasks)`
                   : 'No agent available for automatic assignment.'}
               </Typography>
             </Box>
@@ -483,7 +483,7 @@ function AdminDashboard() {
                 ) : null}
                 {availableHarvests.map((harvest) => (
                   <MenuItem key={harvest.id} value={harvest.id}>
-                    #{harvest.id} {harvest.cropName} | Farmer {harvest.farmer?.username} | Qty {harvest.quantity}
+                    #{harvest.id} {harvest.cropName} | Farmer {harvest.farmer?.name} | Qty {harvest.quantity}
                   </MenuItem>
                 ))}
               </TextField>
@@ -504,7 +504,7 @@ function AdminDashboard() {
                 ) : null}
                 {openDemands.map((demand) => (
                   <MenuItem key={demand.id} value={demand.id}>
-                    #{demand.id} {demand.cropName} | Retailer {demand.retailer?.username} | Qty {demand.quantity}
+                    #{demand.id} {demand.cropName} | Retailer {demand.retailer?.name} | Qty {demand.quantity}
                   </MenuItem>
                 ))}
               </TextField>
@@ -527,7 +527,7 @@ function AdminDashboard() {
                 { key: 'id', label: 'Task' },
                 { key: 'harvest', label: 'Harvest', render: (row) => `${row.harvest?.cropName || '-'} (#${row.harvest?.id || '-'})` },
                 { key: 'demand', label: 'Demand', render: (row) => `${row.demand?.cropName || '-'} (#${row.demand?.id || '-'})` },
-                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.username || '-' },
+                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.name || '-' },
                 { key: 'status', label: 'Status', type: 'status' },
                 {
                   key: 'actions',
@@ -546,7 +546,7 @@ function AdminDashboard() {
               columns={[
                 { key: 'id', label: 'ID' },
                 { key: 'cropName', label: 'Product' },
-                { key: 'farmer', label: 'Farmer', render: (row) => row.farmer?.username || '-' },
+                { key: 'farmer', label: 'Farmer', render: (row) => row.farmer?.name || '-' },
                 { key: 'quantity', label: 'Quantity' },
                 { key: 'expectedPrice', label: 'Price' },
                 { key: 'status', label: 'Status', type: 'status' },
@@ -561,7 +561,7 @@ function AdminDashboard() {
               columns={[
                 { key: 'id', label: 'ID' },
                 { key: 'cropName', label: 'Product' },
-                { key: 'retailer', label: 'Retailer', render: (row) => row.retailer?.username || '-' },
+                { key: 'retailer', label: 'Retailer', render: (row) => row.retailer?.name || '-' },
                 { key: 'quantity', label: 'Quantity' },
                 { key: 'targetPrice', label: 'Target price' },
                 { key: 'status', label: 'Status', type: 'status' },
@@ -579,7 +579,7 @@ function AdminDashboard() {
               rows={agentTaskSummary}
               columns={[
                 { key: 'id', label: 'Agent ID' },
-                { key: 'username', label: 'Agent' },
+                { key: 'name', label: 'Agent' },
                 { key: 'totalAssigned', label: 'Assigned' },
                 { key: 'activeTasks', label: 'Active' },
                 { key: 'completedTasks', label: 'Completed' },
@@ -595,7 +595,7 @@ function AdminDashboard() {
                 { key: 'id', label: 'Task' },
                 { key: 'harvest', label: 'Harvest', render: (row) => row.harvest?.cropName || '-' },
                 { key: 'demand', label: 'Demand', render: (row) => row.demand?.cropName || '-' },
-                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.username || '-' },
+                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.name || '-' },
                 { key: 'status', label: 'Status', type: 'status' },
               ]}
             />
@@ -609,7 +609,7 @@ function AdminDashboard() {
                 { key: 'id', label: 'Task' },
                 { key: 'harvest', label: 'Harvest', render: (row) => row.harvest?.cropName || '-' },
                 { key: 'demand', label: 'Demand', render: (row) => row.demand?.cropName || '-' },
-                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.username || '-' },
+                { key: 'agent', label: 'Agent', render: (row) => row.assignedAgent?.name || '-' },
                 { key: 'status', label: 'Status', type: 'status' },
                 {
                   key: 'actions',
@@ -663,7 +663,8 @@ function AdminDashboard() {
               rows={users}
               columns={[
                 { key: 'id', label: 'ID' },
-                { key: 'username', label: 'Username' },
+                { key: 'name', label: 'Name' },
+                { key: 'phoneNumber', label: 'Mobile' },
                 { key: 'email', label: 'Email' },
                 { key: 'phoneNumber', label: 'Mobile' },
                 { key: 'role', label: 'Role', type: 'status' },
@@ -734,12 +735,12 @@ function AdminDashboard() {
               <Typography><strong>Status:</strong> {taskDetails.task.status}</Typography>
               <Typography><strong>Harvest:</strong> {taskDetails.task.harvest?.cropName || '—'} (#{taskDetails.task.harvest?.id || '—'})</Typography>
               <Typography><strong>Harvest Quantity:</strong> {taskDetails.task.harvest?.quantity ?? '—'}</Typography>
-              <Typography><strong>Farmer:</strong> {taskDetails.task.harvest?.farmer?.username || '—'}</Typography>
+              <Typography><strong>Farmer:</strong> {taskDetails.task.harvest?.farmer?.name || '—'}</Typography>
               <Typography><strong>Demand:</strong> {taskDetails.task.demand?.cropName || '—'} (#{taskDetails.task.demand?.id || '—'})</Typography>
               <Typography><strong>Demand Quantity:</strong> {taskDetails.task.demand?.quantity ?? '—'}</Typography>
-              <Typography><strong>Retailer:</strong> {taskDetails.task.demand?.retailer?.username || '—'}</Typography>
-              <Typography><strong>Assigned Agent:</strong> {taskDetails.task.assignedAgent?.username || '—'}</Typography>
-              <Typography><strong>Assigned By:</strong> {taskDetails.task.assignedBy?.username || '—'}</Typography>
+              <Typography><strong>Retailer:</strong> {taskDetails.task.demand?.retailer?.name || '—'}</Typography>
+              <Typography><strong>Assigned Agent:</strong> {taskDetails.task.assignedAgent?.name || '—'}</Typography>
+              <Typography><strong>Assigned By:</strong> {taskDetails.task.assignedBy?.name || '—'}</Typography>
               <Typography><strong>Assigned At:</strong> {formatDateTime(taskDetails.task.assignedAt)}</Typography>
               <Typography><strong>Accepted At:</strong> {formatDateTime(taskDetails.task.acceptedAt)}</Typography>
               <Typography><strong>Picked Up At:</strong> {formatDateTime(taskDetails.task.pickedUpAt)}</Typography>
