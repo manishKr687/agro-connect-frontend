@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import axiosInstance from '../api/axiosConfig';
@@ -31,7 +32,7 @@ function Login() {
         phoneNumber: form.phoneNumber.trim(),
         password: form.password,
       });
-      saveSession(response.data);
+      flushSync(() => saveSession(response.data));
       navigate(roleHomePath(response.data.role, 'dashboard'));
     } catch (error) {
       setStatus({

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import axiosInstance from '../api/axiosConfig';
@@ -37,7 +38,7 @@ function AdminLogin() {
         return;
       }
 
-      saveSession(response.data);
+      flushSync(() => saveSession(response.data));
       navigate('/admin/dashboard');
     } catch (error) {
       setStatus({
