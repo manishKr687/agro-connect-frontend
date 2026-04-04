@@ -1,8 +1,9 @@
 import { Link as RouterLink, Navigate } from 'react-router-dom';
 import { Box, Button, Chip, Container, Typography } from '@mui/material';
-import { roleHomePath } from '../utils/session';
+import { getSession, roleHomePath } from '../utils/session';
 
-function HomeModern({ session }) {
+function HomeModern() {
+  const session = getSession();
   if (session.userId && session.role) {
     return <Navigate to={roleHomePath(session.role, 'dashboard')} replace />;
   }

@@ -19,10 +19,11 @@ import {
   getSession,
   roleHomePath,
   saveSession,
-  subscribeToSessionChanges,
 } from './utils/session';
 
-export function PrivateRoute({ children, role, session }) {
+export function PrivateRoute({ children, role }) {
+  const session = getSession();
+
   if (!session.userId) {
     return <Navigate to="/login" replace />;
   }
@@ -34,7 +35,9 @@ export function PrivateRoute({ children, role, session }) {
   return children;
 }
 
-export function SessionRedirect({ session }) {
+export function SessionRedirect() {
+  const session = getSession();
+
   if (!session.userId || !session.role) {
     clearSession();
     return <Navigate to="/" replace />;
@@ -44,21 +47,14 @@ export function SessionRedirect({ session }) {
 }
 
 function App() {
-  const [session, setSession] = React.useState(getSession());
   const [authReady, setAuthReady] = React.useState(false);
-
-  const syncSession = React.useCallback(() => {
-    setSession(getSession());
-  }, []);
 
   const bootstrapSession = React.useCallback(async () => {
     try {
       const response = await axiosInstance.get('/api/users/me');
       saveSession(response.data);
-      setSession(getSession());
     } catch (error) {
       clearSession();
-      setSession(getSession());
     } finally {
       setAuthReady(true);
     }
@@ -67,8 +63,6 @@ function App() {
   React.useEffect(() => {
     bootstrapSession();
   }, [bootstrapSession]);
-
-  React.useEffect(() => subscribeToSessionChanges(syncSession), [syncSession]);
 
   if (!authReady) {
     return (
@@ -81,7 +75,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeModern session={session} />} />
+        <Route path="/" element={<HomeModern />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -97,7 +91,7 @@ function App() {
         <Route
           path="/farmer/dashboard"
           element={(
-            <PrivateRoute role="FARMER" session={session}>
+            <PrivateRoute role="FARMER">
               <FarmerDashboard />
             </PrivateRoute>
           )}
@@ -106,7 +100,7 @@ function App() {
         <Route
           path="/retailer/dashboard"
           element={(
-            <PrivateRoute role="RETAILER" session={session}>
+            <PrivateRoute role="RETAILER">
               <RetailerDashboard />
             </PrivateRoute>
           )}
@@ -115,7 +109,7 @@ function App() {
         <Route
           path="/agent/dashboard"
           element={(
-            <PrivateRoute role="AGENT" session={session}>
+            <PrivateRoute role="AGENT">
               <AgentDashboard />
             </PrivateRoute>
           )}
@@ -125,14 +119,14 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={(
-            <PrivateRoute role="ADMIN" session={session}>
+            <PrivateRoute role="ADMIN">
               <AdminDashboard />
             </PrivateRoute>
           )}
         />
 
         <Route path="/market" element={<PublicDemandDashboard />} />
-        <Route path="/dashboard" element={<SessionRedirect session={session} />} />
+        <Route path="/dashboard" element={<SessionRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
