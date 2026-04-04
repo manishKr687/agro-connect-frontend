@@ -9,11 +9,13 @@ import FarmerDashboard from './pages/FarmerDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import HomeModern from './pages/HomeModern';
 import Login from './pages/Login';
+import Logout from './pages/Logout';
 import PublicDemandDashboard from './pages/PublicDemandDashboard';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import RetailerDashboard from './pages/RetailerDashboard';
 import axiosInstance from './api/axiosConfig';
+import ErrorBoundary from './components/ErrorBoundary';
 import {
   clearSession,
   getSession,
@@ -73,6 +75,7 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomeModern />} />
@@ -126,10 +129,12 @@ function App() {
         />
 
         <Route path="/market" element={<PublicDemandDashboard />} />
+        <Route path="/logout" element={<Logout />} />
         <Route path="/dashboard" element={<SessionRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

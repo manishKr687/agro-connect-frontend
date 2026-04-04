@@ -274,9 +274,50 @@ a {
 }
 
 .status-chip {
+  font-weight: 700 !important;
+}
+
+/* Status-specific chip colours */
+.status-chip--available,
+.status-chip--open {
+  background: rgba(47, 106, 79, 0.12) !important;
+  color: #1e5c3a !important;
+}
+
+.status-chip--reserved {
   background: rgba(216, 164, 87, 0.18) !important;
   color: #7b5319 !important;
-  font-weight: 700 !important;
+}
+
+.status-chip--assigned,
+.status-chip--accepted,
+.status-chip--picked_up {
+  background: rgba(25, 118, 210, 0.1) !important;
+  color: #1565c0 !important;
+}
+
+.status-chip--in_transit {
+  background: rgba(156, 39, 176, 0.1) !important;
+  color: #6a1b9a !important;
+}
+
+.status-chip--delivered,
+.status-chip--fulfilled,
+.status-chip--sold {
+  background: rgba(46, 125, 50, 0.14) !important;
+  color: #1b5e20 !important;
+}
+
+.status-chip--cancelled,
+.status-chip--rejected {
+  background: rgba(211, 47, 47, 0.1) !important;
+  color: #b71c1c !important;
+}
+
+.status-chip--withdrawal_requested,
+.status-chip--change_requested {
+  background: rgba(245, 124, 0, 0.12) !important;
+  color: #e65100 !important;
 }
 
 .task-grid {

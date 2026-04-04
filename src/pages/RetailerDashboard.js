@@ -26,6 +26,7 @@ function RetailerDashboard() {
   const [editingId, setEditingId] = useState(null);
   const [status, setStatus]       = useState({ type: '', message: '' });
   const [loading, setLoading]     = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
   const [cropNameHint, setCropNameHint] = useState('');
   const [cropDisplayName, setCropDisplayName] = useState('');
   const [cropConfirm, setCropConfirm] = useState({ open: false, original: '', suggested: '' });
@@ -34,11 +35,14 @@ function RetailerDashboard() {
   });
 
   const fetchDemands = async () => {
+    setTableLoading(true);
     try {
       const response = await axiosInstance.get(`/api/retailers/${session.userId}/demands`);
       setDemands(response.data);
     } catch {
       setStatus({ type: 'error', message: t('retailer.error.load') });
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -247,6 +251,7 @@ function RetailerDashboard() {
         <SectionCard title={t('retailer.table.title')} subtitle={t('retailer.table.subtitle')}>
           <MarketplaceTable
             emptyMessage={t('retailer.table.empty')}
+            loading={tableLoading}
             rows={demands}
             columns={[
               { key: 'cropName',    label: t('retailer.table.product') },
@@ -260,7 +265,7 @@ function RetailerDashboard() {
                 type: 'actions',
                 actions: (row) => [
                   { label: t('common.edit'),   onClick: () => handleEdit(row),         disabled: row.status !== 'OPEN' },
-                  { label: t('common.delete'), color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'OPEN' },
+                  { label: t('common.delete'), color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'OPEN', confirmDelete: true },
                   { label: t('retailer.table.requestChange'), onClick: () => openChangeModal(row), disabled: row.status !== 'RESERVED' },
                 ],
               },

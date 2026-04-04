@@ -26,17 +26,21 @@ function FarmerDashboard() {
   const [editingId, setEditingId]     = useState(null);
   const [status, setStatus]           = useState({ type: '', message: '' });
   const [loading, setLoading]         = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
   const [withdrawalModal, setWithdrawalModal] = useState({ open: false, harvestId: null, reason: '', saving: false });
   const [cropNameHint, setCropNameHint] = useState('');
   const [cropDisplayName, setCropDisplayName] = useState('');
   const [cropConfirm, setCropConfirm] = useState({ open: false, original: '', suggested: '' });
 
   const fetchHarvests = async () => {
+    setTableLoading(true);
     try {
       const response = await axiosInstance.get(`/api/farmers/${session.userId}/harvests`);
       setHarvests(response.data);
     } catch {
       setStatus({ type: 'error', message: t('farmer.error.load') });
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -239,6 +243,7 @@ function FarmerDashboard() {
         <SectionCard title={t('farmer.table.title')} subtitle={t('farmer.table.subtitle')}>
           <MarketplaceTable
             emptyMessage={t('farmer.table.empty')}
+            loading={tableLoading}
             rows={harvests}
             columns={[
               { key: 'cropName',      label: t('farmer.table.product') },
@@ -252,7 +257,7 @@ function FarmerDashboard() {
                 type: 'actions',
                 actions: (row) => [
                   { label: t('common.edit'),   onClick: () => handleEdit(row),              disabled: row.status !== 'AVAILABLE' },
-                  { label: t('common.delete'), color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'AVAILABLE' },
+                  { label: t('common.delete'), color: 'error', onClick: () => handleDelete(row.id), disabled: row.status !== 'AVAILABLE', confirmDelete: true },
                   { label: t('farmer.table.requestWithdrawal'), onClick: () => openWithdrawalModal(row.id), disabled: row.status !== 'RESERVED' },
                 ],
               },

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Skeleton, Stack, TextField } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosConfig';
 import DashboardShell from '../components/DashboardShell';
@@ -12,13 +12,17 @@ function AgentDashboard() {
   const [tasks, setTasks] = useState([]);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [rejectionReason, setRejectionReason] = useState({});
+  const [tableLoading, setTableLoading] = useState(true);
 
   const fetchTasks = async () => {
+    setTableLoading(true);
     try {
       const response = await axiosInstance.get(`/api/agents/${session.userId}/tasks`);
       setTasks(response.data);
     } catch (error) {
       setStatus({ type: 'error', message: t('agent.error.load') });
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -53,7 +57,15 @@ function AgentDashboard() {
         {status.message ? <Alert severity={status.type || 'info'} sx={{ mb: 2 }}>{status.message}</Alert> : null}
 
         <Stack spacing={2}>
-          {tasks.length === 0 ? (
+          {tableLoading ? (
+            [1, 2, 3].map((n) => (
+              <Box key={n} className="task-card">
+                <Skeleton width="40%" height={24} />
+                <Skeleton width="70%" sx={{ mt: 1 }} />
+                <Skeleton width="60%" />
+              </Box>
+            ))
+          ) : tasks.length === 0 ? (
             <Box className="empty-state">{t('agent.empty')}</Box>
           ) : (
             tasks.map((task) => (
@@ -61,7 +73,12 @@ function AgentDashboard() {
                 <Box className="task-card__header">
                   <div>
                     <strong>Task #{task.id}</strong>
-                    <div className="task-card__status">{task.status.replace(/_/g, ' ')}</div>
+                    <Chip
+                      label={task.status.replace(/_/g, ' ')}
+                      size="small"
+                      className={`status-chip status-chip--${task.status.toLowerCase()}`}
+                      sx={{ mt: 0.5 }}
+                    />
                   </div>
                 </Box>
 
@@ -145,15 +162,11 @@ function AgentDashboard() {
                   ) : null}
 
                   {task.status === 'DELIVERED' ? (
-                    <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 700 }}>
-                      ✓ Delivered
-                    </Typography>
+                    <Chip label="✓ Delivered" size="small" className="status-chip status-chip--delivered" />
                   ) : null}
 
                   {task.status === 'REJECTED' ? (
-                    <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 700 }}>
-                      ✗ Rejected
-                    </Typography>
+                    <Chip label="✗ Rejected" size="small" className="status-chip status-chip--rejected" />
                   ) : null}
                 </Box>
               </Box>
